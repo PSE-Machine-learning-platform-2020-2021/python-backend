@@ -4,6 +4,9 @@ from configReader import ConfigReader
 
 
 class Database:
+    """
+    This class bundles toghether all needed database accessing needed for current plan of python part.
+    """
     def __init__(self):
         config = ConfigReader()
         db_data = config.get_values("DB")
