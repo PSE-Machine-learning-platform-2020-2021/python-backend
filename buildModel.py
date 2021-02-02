@@ -1,9 +1,10 @@
 # coding=utf-8
+"""This file describes sort of a function for the TypeScript front end. It executes all necessary steps to build and
+train an AI model. """
 import sys
 
 import numpy as np
 import pandas as pd
-import tsfresh
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -11,7 +12,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import Normalizer, MinMaxScaler, QuantileTransformer, RobustScaler, StandardScaler
 from sklearn.svm import SVC
 from tqdm import tqdm
-from tsfresh.feature_extraction import ComprehensiveFCParameters
+
+from database import Database
 
 
 def select_features(features_from_outside):
@@ -140,11 +142,18 @@ def partition_data(x_data: list, y_data: list, percentage=0.8):
     return train_x, train_y, test_x, test_y
 
 
+def fetch_parameters():
+    """
+    This method extracts the command line arguments and resolves them into usable data for this script.
+    :return: All the data that we need, a.t.m. just everything after file name in a list. Sort of.
+    """
+    return sys.argv
+
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        raise IndexError
+    # first of all - get our execution parameters!
+    exec_params = fetch_parameters()
+    # Get Access to our data base
+    database = Database()
+    # extract all needed data from there - as specified in our parameters.
 
-    scaler = choose_scaler(sys.argv[1])
-    classifier = choose_classifier(sys.argv[2])
-
-    from sklearn import pipeline

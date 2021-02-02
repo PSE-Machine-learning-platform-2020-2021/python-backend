@@ -8,6 +8,9 @@ class Database:
     This class bundles toghether all needed database accessing needed for current plan of python part.
     """
     def __init__(self):
+        """
+        Creates an object of Database class based on configuration file.
+        """
         config = ConfigReader()
         db_data = config.get_values("DB")
         self.data_base = mysql.connector.connect(*db_data)
