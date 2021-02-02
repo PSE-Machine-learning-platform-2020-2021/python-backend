@@ -1,8 +1,10 @@
+# coding=utf-8
 import sys
 
 import numpy as np
 import pandas as pd
 import tsfresh
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
@@ -20,18 +22,18 @@ def select_features(features_from_outside):
     :return: A list consisting of their corresponding name here.
     """
     features_available = {
-                             'MIN': "minimum",
-                             'MAX': "maximum",
-                             'VARIANCE': "variance",
-                             'ENERGY': "abs_energy",
-                             'MEAN': "mean",
-                             'AUTOREGRESSIVE': "ar_coefficient",
-                             'IQR': "quantile",
-                             'SKEWNESS': "skewness",
-                             'KURTOSIS': "kurtosis",
-                             'FOURIER_TRANSFORM': "???"
+        'MIN': "minimum",
+        'MAX': "maximum",
+        'VARIANCE': "variance",
+        'ENERGY': "abs_energy",
+        'MEAN': "mean",
+        'AUTOREGRESSIVE': "ar_coefficient",
+        'IQR': "quantile",
+        'SKEWNESS': "skewness",
+        'KURTOSIS': "kurtosis",
+        'FOURIER_TRANSFORM': "???"
     }
-    return [features_available[x] for x in features_from_outside]
+    return [features_available[x] for x in features_from_outside if x in features_available]
 
 
 def choose_scaler(name: str):
@@ -40,13 +42,17 @@ def choose_scaler(name: str):
     :param name: The name of the scaler type as of Preprocessing enum in TypeScript
     :return: An Scaler object matching the type of the passed type name
     """
-    return {
+    options = {
         'MIN_MAX': MinMaxScaler(),
         'NORMALIZER': Normalizer(),
         'QUANTILE_TRANSFORMER': QuantileTransformer(),
         'ROBUST_SCALER': RobustScaler(),
         'STANDARD_SCALER': StandardScaler()
-    }[name]
+    }
+    if name in options:
+        return options[name]
+    else:
+        return StandardScaler()
 
 
 def choose_classifier(name: str):
@@ -55,12 +61,16 @@ def choose_classifier(name: str):
     :param name:
     :return:
     """
-    return {
+    options = {
         'MLP': MLPClassifier(),
         'RANDOM_FOREST': RandomForestClassifier(),
         'K_NEIGHBORS': KNeighborsClassifier(),
         'SVM': SVC()
-    }[name]
+    }
+    if name in options:
+        return options[name]
+    else:
+        return DummyClassifier()
 
 
 def preprocess_data(data: pd.DataFrame, scaler, training_data=False):
@@ -90,10 +100,15 @@ def train_classifier(x_axis_data, y_axis_data, classifier):
     classifier.fit(x_axis_data, y_axis_data)
 
 
-def extract_features(data, features):
-    window_size = 128
-    sliding_step = 64
-    X = []
+def create_time_slices(data: pd.DataFrame, chunk_size=128, step=64):
+    """
+    This method cuts timeline based data sets into slices specified by passed parameters.
+    :param step: How many data points should lie between the beginning of two consecutive chunks?
+    :param chunk_size: How many data points a chunk should contain
+    :param data: A pandas DataFrame object containing timeline based data to be transformed.
+    :returns: Training data and after that the corresponding labels.
+    """
+    x = []
     y = []
     for data_set in tqdm(data):
         df = pd.DataFrame(data_set)
@@ -101,30 +116,28 @@ def extract_features(data, features):
         labels = np.where(labels > 6, 7, labels)
         df["label"] = labels
         # change the label  7 stand for all rest activity
-        for sliding_index in range(0, df.shape[0] - window_size + 1, sliding_step):
-            data_x = df.iloc[sliding_index:sliding_index + window_size, :6]
-            data_y = df.iloc[sliding_index:sliding_index + window_size, 6].value_counts().index[0]
-            X.append(data_x)
+        for i in range(0, df.shape[0] - chunk_size + 1, step):
+            data_x = df.iloc[i:i + chunk_size, :6]
+            data_y = df.iloc[i:i + chunk_size, 6].value_counts().index[0]
+            x.append(data_x)
             y.append(data_y)
-    settings = {key: ComprehensiveFCParameters()[key] for key in features}
-    all_features = []
-    for temp in tqdm(X):
-        values = []
-        values.extend(list(temp.mean().values))
-        values.extend(list(temp.min().values))
-        values.extend(list(temp.max().values))
-        values.extend(list(temp.var().values))
-        values.extend(list(temp.skew().values))
-        values.extend(list(temp.kurtosis().values))
-        all_features.append(values)
-    all_features = pd.DataFrame(all_features)
-    all_features["label"] = y
-    temp = X[0].copy()
-    temp["id"] = 1
-    temp_feature = tsfresh.extract_features(temp,
-                                            column_id="id",
-                                            default_fc_parameters=settings,
-                                            disable_progressbar=True)
+    return x, y
+
+
+def partition_data(x_data: list, y_data: list, percentage=0.8):
+    """
+    This method breaks up the passed data into a part of paired X/Y-axis training data and a part of X/Y-axis labeled
+    testing data.
+    :param x_data: The data to split up
+    :param y_data: The data labels corresponding to x_data
+    :param percentage: The percentage of the input data to be used as training data.
+    :returns: Four chunks of data: X-axis training, Y-axis training, X-axis testing, Y-axis testing
+    """
+    train_x = x_data[:int(len(x_data) * percentage)]
+    train_y = y_data[:int(len(y_data) * percentage)]
+    test_x = x_data[int(len(x_data) * percentage):]
+    test_y = y_data[int(len(y_data) * percentage):]
+    return train_x, train_y, test_x, test_y
 
 
 if __name__ == "__main__":
@@ -134,3 +147,4 @@ if __name__ == "__main__":
     scaler = choose_scaler(sys.argv[1])
     classifier = choose_classifier(sys.argv[2])
 
+    from sklearn import pipeline
