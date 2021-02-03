@@ -21,16 +21,18 @@ class Database:
         :param indices: A list containing the database indices of all of the desired data sets for further processing.
         :return: Retrieved datasets or exceptions/errors based on the reason that caused the request to fail.
         """
-        pass
+        raise NotImplementedError()
 
     def get_scalers(self, scaler_type: str, data_sets: list) -> tuple:
         """
         This method gets all scalers out of their database table that have the corresponding
         type and are fitted to the given datasets.
         Raises an error, if mysql.connector module does so.
+        :param scaler_type: The class name of the scaler type.
+        :param data_sets: The ids of the datasets used.
         :return: A list of zero or more Scalers from sklearn.
         """
-        pass
+        raise NotImplementedError()
 
     def put_scaler(self, scaler: object, scaler_type: str, data_sets: list) -> int:
         """
