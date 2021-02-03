@@ -1,4 +1,7 @@
+from typing import Union
+
 import mysql.connector
+from sklearn.preprocessing import MinMaxScaler, Normalizer, RobustScaler, StandardScaler, QuantileTransformer
 
 from configReader import ConfigReader
 
@@ -23,14 +26,15 @@ class Database:
         """
         raise NotImplementedError()
 
-    def get_scalers(self, scaler_type: str, data_sets: list) -> tuple:
+    def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:
         """
         This method gets all scalers out of their database table that have the corresponding
-        type and are fitted to the given datasets.
+        type and are fitted to the given datasets and features.
         Raises an error, if mysql.connector module does so.
-        :param scaler_type: The class name of the scaler type.
-        :param data_sets: The ids of the datasets used.
-        :return: A list of zero or more Scalers from sklearn.
+        :param features: All the features extracted on the data used within the scaler.
+        :param scaler_type: The class name of the scaler type as of <object>.__class__.__name__
+        :param data_set_ids: The ids of the datasets used.
+        :return: A tuple of zero or more Scalers from sklearn.
         """
         raise NotImplementedError()
 
@@ -43,9 +47,9 @@ class Database:
         :param data_sets: The datasets the scaler was fitted to, also for later retrieving the scaler.
         :return: The id of the scaler in its database table.
         """
-        pass
+        raise NotImplementedError()
 
-    def put_classifier(self, classifier: object, scaler_id=0) -> int:
+    def put_classifier(self, classifier: object) -> int:
         """
         This method puts a classifier into the classifier database table.
         If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are re-raised here.
@@ -55,7 +59,7 @@ class Database:
         and use the result for association.
         :return: the id of the classifier in its database table.
         """
-        pass
+        raise NotImplementedError()
 
     def get_stuff(self, classifier_id: int) -> tuple:
         """
@@ -64,3 +68,15 @@ class Database:
         :param classifier_id: The id of the classifier in its database table.
         :return: A classifier object and a scaler object bundled together in a tuple.
         """
+        raise NotImplementedError()
+
+    def put_stuff(self, scaler, data_set_ids, features, classifier):
+        """
+        This method puts a scaler, a set of data set ids, a set of features and a classifier into a database.
+        :param features: A list of used features for the scaler
+        :param data_set_ids: A list of data set ids used for the scaler
+        :param scaler: The scaler corresponding to the classifier
+        :param classifier: A classifier from sklearn.
+        :return: The Id of the classifier ("AI model ID").
+        """
+        raise NotImplementedError()
