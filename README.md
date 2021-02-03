@@ -10,4 +10,9 @@
 
 ## Random implementation notes
 ### Database
-+ Scalers and Classifiers shall be stored in pickle format.
+Scalers and Classifiers shall be stored in pickle format.
+It is ok as it is the easiest working way to get this done.\
+For loading, use pickle.load(<file-like object>)
+For storing, use pickle.dump(<obj>, <file-like object>)
+Or, if easier, use both functions with additional s at function's name end to perform actions in script on byte object.
+This might be necessary in order to store those object into a database.
