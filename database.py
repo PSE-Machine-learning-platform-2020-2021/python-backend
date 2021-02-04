@@ -1,7 +1,9 @@
-from typing import Union
+# coding=utf-8
+"""
+This file contains the data base connection handling class DataBase
+"""
 
 import mysql.connector
-from sklearn.preprocessing import MinMaxScaler, Normalizer, RobustScaler, StandardScaler, QuantileTransformer
 
 from configReader import ConfigReader
 
@@ -41,7 +43,8 @@ class Database:
     def put_scaler(self, scaler: object, scaler_type: str, data_sets: list) -> int:
         """
         This method puts a new scaler into the scaler table in the database.
-        If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are re-raised here.
+        If the underlying database connector mechanics raise Errors or Exceptions
+        while doing this, they are re-raised here.
         :param scaler: The scaler object itself
         :param scaler_type: The type of the scaler object for later retrieving the scaler.
         :param data_sets: The datasets the scaler was fitted to, also for later retrieving the scaler.
@@ -52,11 +55,9 @@ class Database:
     def put_classifier(self, classifier: object) -> int:
         """
         This method puts a classifier into the classifier database table.
-        If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are re-raised here.
+        If the underlying database connector mechanics raise Errors or Exceptions
+        while doing this, they are re-raised here.
         :param classifier: The classifier itself.
-        :param scaler_id: An optional argument to inform this method there is already a scaler in scaler database table to
-        be associated with this classifier. If no value larger than zero is passed, than this method will call put scaler
-        and use the result for association.
         :return: the id of the classifier in its database table.
         """
         raise NotImplementedError()
@@ -64,7 +65,8 @@ class Database:
     def get_stuff(self, classifier_id: int) -> tuple:
         """
         This method retrieves a classifier and the scaler associated with it from their respecting database tables.
-        If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are re-raised here.
+        If the underlying database connector mechanics raise Errors or Exceptions
+        while doing this, they are re-raised here.
         :param classifier_id: The id of the classifier in its database table.
         :return: A classifier object and a scaler object bundled together in a tuple.
         """
