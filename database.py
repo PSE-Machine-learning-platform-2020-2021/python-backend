@@ -10,7 +10,7 @@ from configReader import ConfigReader
 
 class Database:
     """
-    This class bundles toghether all needed database accessing needed for current plan of python part.
+    This class bundles together all needed database accessing needed for current plan of python part.
     """
     def __init__(self):
         """

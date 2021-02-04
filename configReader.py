@@ -29,11 +29,14 @@ def constant(f):
     return property(f_get, f_set)
 
 
+# noinspection PyPep8Naming
 class ConfigReader:
     """
     This class is an adaption of built-in ConfigParser class.
     It bundles together some functionality to fit our needs.
     """
+
+    # noinspection PyPep8Naming
     @constant
     def CONFIG_FILE(self):
         """
