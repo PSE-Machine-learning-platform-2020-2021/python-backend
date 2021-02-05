@@ -2,8 +2,10 @@
 """
 This file contains the data base connection handling class DataBase
 """
+import pickle
 
 import mysql.connector
+import pandas as pd
 
 from configReader import ConfigReader
 
@@ -11,7 +13,9 @@ from configReader import ConfigReader
 class Database:
     """
     This class bundles together all needed database accessing needed for current plan of python part.
+    TODO Get the data base running!
     """
+
     def __init__(self):
         """
         Creates an object of Database class based on configuration file.
@@ -26,51 +30,66 @@ class Database:
         :param indices: A list containing the database indices of all of the desired data sets for further processing.
         :return: Retrieved datasets or exceptions/errors based on the reason that caused the request to fail.
         """
-        raise NotImplementedError()
+        cursor = self.data_base.cursor(dictionary=True)
+        query = """SELECT * FROM dataSets WHERE Id = %s"""
+        output = []
+        for x in indices:
+            data_tuple = x,
+            cursor.execute(query, data_tuple)
+            result = cursor.fetchall()
+            output.append(pd.DataFrame(result[0]["DataSet"]))
+        return tuple(output)
 
     def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:
         """
         This method gets all scalers out of their database table that have the corresponding
         type and are fitted to the given datasets and features.
-        Raises an error, if mysql.connector module does so.
+        If the underlying database connector mechanics raise Errors or Exceptions
+        while doing this, they are not handled here.
         :param features: All the features extracted on the data used within the scaler.
         :param scaler_type: The class name of the scaler type as of <object>.__class__.__name__
         :param data_set_ids: The ids of the datasets used.
         :return: A tuple of zero or more Scalers from sklearn.
         """
-        raise NotImplementedError()
-
-    def put_scaler(self, scaler: object, scaler_type: str, data_sets: list) -> int:
-        """
-        This method puts a new scaler into the scaler table in the database.
-        If the underlying database connector mechanics raise Errors or Exceptions
-        while doing this, they are re-raised here.
-        :param scaler: The scaler object itself
-        :param scaler_type: The type of the scaler object for later retrieving the scaler.
-        :param data_sets: The datasets the scaler was fitted to, also for later retrieving the scaler.
-        :return: The id of the scaler in its database table.
-        """
-        raise NotImplementedError()
-
-    def put_classifier(self, classifier: object) -> int:
-        """
-        This method puts a classifier into the classifier database table.
-        If the underlying database connector mechanics raise Errors or Exceptions
-        while doing this, they are re-raised here.
-        :param classifier: The classifier itself.
-        :return: the id of the classifier in its database table.
-        """
-        raise NotImplementedError()
+        cursor = self.data_base.cursor()
+        cursor.execute("SELECT Scaler, Features, DataSets FROM scalers WHERE ScalerType = {st}".format(st=scaler_type))
+        result = cursor.fetchall()
+        features.sort()
+        data_set_ids.sort()
+        output = []
+        for x in result:
+            if x[1].sort() == features and x[2].sort() == data_set_ids:
+                output.append(pickle.loads(x[0]))
+        return tuple(output)
 
     def get_stuff(self, classifier_id: int) -> tuple:
         """
         This method retrieves a classifier and the scaler associated with it from their respecting database tables.
-        If the underlying database connector mechanics raise Errors or Exceptions
-        while doing this, they are re-raised here.
+        If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are not
+        handled here. If there is more than one result with the specified ID, a ValueError is raised, as the database
+        is corrupted in this case.
         :param classifier_id: The id of the classifier in its database table.
         :return: A classifier object and a scaler object bundled together in a tuple.
         """
-        raise NotImplementedError()
+        query_cls = """SELECT * FROM classifiers WHERE Id = %s"""
+        query_scl = """SELECT * FROM scalers WHERE Id = %s"""
+        data_tuple_cls = classifier_id,
+        cursor = self.data_base.cursor(dictionary=True)
+        cursor.execute(query_cls, data_tuple_cls)
+        result = cursor.fetchall()
+        if cursor.rowcount > 1:
+            raise ValueError
+        classifier = pickle.loads(result[0]["Classifier"])
+        if "Scaler" in result[0]:
+            data_tuple_scl = result[0]["Scaler"],
+        else:
+            data_tuple_scl = classifier_id,
+        cursor.execute(query_scl, data_tuple_scl)
+        result = cursor.fetchall()
+        if cursor.rowcount > 1:
+            raise ValueError
+        scaler = pickle.loads(result[0]["Scaler"])
+        return classifier, scaler
 
     def put_stuff(self, scaler, data_set_ids, features, classifier):
         """
@@ -81,4 +100,52 @@ class Database:
         :param classifier: A classifier from sklearn.
         :return: The Id of the classifier ("AI model ID").
         """
-        raise NotImplementedError()
+
+        def put_classifier(cl: object) -> int:
+            """
+            This method puts a classifier into the classifier database table.
+            If the underlying database connector mechanics raise Errors or Exceptions
+            while doing this, they are not handled here.
+            :param cl: The classifier itself.
+            :return: the id of the classifier in its database table.
+            """
+            cursor = self.data_base.cursor()
+            cl_input = pickle.dumps(cl)
+            q = """INSERT INTO classifiers (Classifier) VALUES (%s)"""
+            dt = cl_input,
+            cursor.execute(q, dt)
+            self.data_base.commit()
+            return cursor.lastrowid
+
+        def put_scaler(sc: object, scaler_type: str, ft: list, data_sets: list) -> int:
+            """
+            This method puts a new scaler into the scaler table in the database.
+            If the underlying database connector mechanics raise Errors or Exceptions
+            while doing this, they are not handled here.
+            :param ft: A list of all features that where extracted from the data used for this scaler.
+            :param sc: The scaler object itself
+            :param scaler_type: The type of the scaler object for later retrieving the scaler.
+            :param data_sets: The datasets the scaler was fitted to, also for later retrieving the scaler.
+            :return: The id of the scaler in its database table.
+            """
+            cursor = self.data_base.cursor()
+            data_sets.sort()
+            features.sort()
+            sc_input = pickle.dumps(sc)
+            q = """INSERT INTO scalers (Scaler, ScalerType, Features, DataSets) VALUES (%s, %s, %s, %s)"""
+            dt = sc_input, scaler_type, ft, data_sets
+            cursor.execute(q, dt)
+            self.data_base.commit()
+            return cursor.lastrowid
+
+        scaler_id = put_scaler(scaler, scaler.__class__.__name__, features, data_set_ids)
+        classifier_id = put_classifier(classifier)
+
+        if classifier_id != scaler_id:
+            query = """UPDATE classifiers SET Scaler = %s WHERE Id = %s"""
+            data_tuple = scaler_id, classifier_id
+            csr = self.data_base.cursor()
+            csr.execute(query, data_tuple)
+            self.data_base.commit()
+
+        return classifier_id

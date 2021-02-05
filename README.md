@@ -17,6 +17,16 @@ For storing, use `pickle.dump(<obj>, <file-like object>)`
 Or, if easier, use both functions with additional s at function's name end to perform actions in script on byte object.
 This might be necessary in order to store those object into a database.
 
+The Scaler Table needs to meet following requirements:
+
+    name = scalers
+    columns = Id, Scaler, ScalerType, Features, DataSets[, optional further columns]
+    
+The Classifier Table needs to look like this:
+
+    name = classifiers
+    columns = Id, Classifier, Scaler[, optional further columns]
+
 ### Note for the PHP programmer who will do the environment script for this script:
 You must do first of all the following:
 
