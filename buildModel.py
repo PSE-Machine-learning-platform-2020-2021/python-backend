@@ -29,30 +29,50 @@ def fetch_parameters():
     This method extracts the command line arguments and resolves them into usable data for this script.
     This means the name of the temporary json file where the post request parameters are stored in.
     The json file needs to contain the following data in exact the described format in order to be usable:
+
     {
         'dataSets': [
             1,
+
             <...>,
+
             42
         ],
+
         'features': [
             "<Feature#1>",
+
             "<...>",
+
             "<Feature#n>"
         ],
+
         'scaler': "<Scaler>",
+
         'classifier': "<Classifier>",
+
         'trainingDataPercentage': 0.8,
+
         'slidingWindowSize': 128,
+
         'slidingWindowStep': 64
     }
+
     The numbers in 'datasets' are just the ids of the datasets to use in the model.
+
     The strings in 'features', 'scaler' and 'classifier' are just the constants of the corresponding enums as strings.
+
     The last three values are optional.
+
     'trainingDataPercentage' must be in range (0;1).
+
     'slidingWindowSize' and 'slidingWindowStep' must be larger than 0 and integer numbers.
+
     The file must of course be correct json format.
+
     If there is more information in the json file, this is no problem.
+
+    There is no overall covering of the given specifications!
     :return: All the contents of the specified json file as dict.
     """
     if len(sys.argv) < 2:
