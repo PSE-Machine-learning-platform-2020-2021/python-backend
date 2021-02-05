@@ -258,10 +258,9 @@ def notify_server(model_id: int):
     This method is used to notify the server that the calculation of an ai model is done.
     The server is now asked to inform the user in a appropriate way.
     :param model_id: The id of the classifier of the finished model in the data base.
-    :return: Nothing, as exit(0) is called within method.
+    :return: Nothing.
     """
-    print(str(model_id) + "\n\r")
-    exit(0)
+    print(str(model_id))
 
 
 if __name__ == "__main__":
