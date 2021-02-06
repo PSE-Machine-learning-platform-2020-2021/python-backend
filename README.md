@@ -8,15 +8,22 @@
 + Line comments start with a # symbol.
 + All comments and Docstrings are written in English.
 
-## Random implementation notes
-### Database
-Scalers and Classifiers shall be stored in pickle format.
-It is ok as it is the easiest working way to get this done.\
-For loading, use `pickle.load(<file-like object>)`
-For storing, use `pickle.dump(<obj>, <file-like object>)`
-Or, if easier, use both functions with additional s at function's name end to perform actions in script on byte object.
-This might be necessary in order to store those object into a database.
+## Random notes for storing and formats
+All data sets need to be stored in an array looking like this: 
 
+    ┌─[data columns]─┐|label
+    1,1 |  ...  | 1,n |  X
+    ... |  ...  | ... | ...
+    n,1 |  ...  | n,n |  Y
+     
+First n columns are those containing the actual data and the last one contains a label connected to this data point.
+The label column _**MUST NOT**_ contain negative numbers! I use them internally for labelling unlabeled areas.
+Additionally we need some data about record frequency, as well as a dictionary
+associating names to the label numbers in the label column in the data set. 
+
+## Random implementation notes
+Everything here is so to say ToDo
+### Database
 The Scaler Table needs to meet following requirements:
 
     name = scalers
@@ -38,7 +45,7 @@ You must do first of all the following:
     ob_flush();
     flush();
     
-After that you may start the python code via `xec("python buildModel.py", $output);`.
+After that you may start the python code via `exec("python buildModel.py", $output);`.
 In this place `$output` will be filled with the program output that should be exactly one line containing the id of the 
 ai model built.
 

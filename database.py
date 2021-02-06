@@ -36,8 +36,9 @@ class Database:
         for x in indices:
             data_tuple = x,
             cursor.execute(query, data_tuple)
-            result = cursor.fetchall()
-            output.append(pd.DataFrame(result[0]["DataSet"]))
+            result = cursor.fetchone()
+            result.update("DataSet", pd.DataFrame(result["DataSet"]))
+            output.append(result)
         return tuple(output)
 
     def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:

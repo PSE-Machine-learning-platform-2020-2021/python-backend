@@ -7,6 +7,7 @@ import os
 import sys
 
 import pandas as pd
+import numpy as np
 import tsfresh
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -154,18 +155,19 @@ def choose_classifier(name: str):
         return DummyClassifier()
 
 
-def create_time_slices(data, chunk_size=128, step=64):
+def create_time_slices(data: list[pd.DataFrame], chunk_size=128, step=64):
     """
     This method cuts timeline based data sets into slices specified by passed parameters.
     :param step: How many data points should lie between the beginning of two consecutive chunks?
     :param chunk_size: How many data points a chunk should contain
-    :param data: A pandas DataFrame object containing timeline based data to be transformed.
+    :param data: A list of pandas DataFrame objects containing timeline based data to be transformed.
+    Those Dataframe objects must contain a column 'label' as last column.
     :returns: Training data and after that the corresponding labels.
     """
     x = []
     y = []
-    for data_set in data:
-        df = pd.DataFrame(data_set)
+    for df in data:
+        df["label"] = np.array(df["label"].fillna(-1))
         for i in range(0, df.shape[0] - chunk_size + 1, step):
             data_x = df.iloc[i:i + chunk_size, :-1]
             data_y = df.iloc[i:i + chunk_size, -1].value_counts().index[0]
@@ -184,7 +186,7 @@ def extract_features(features: list, data: list):
     def worker(queue, features, data, id):
         """
         This inner function runs the real Feature Extraction task.
-        :param queue: the queue in which the data is to be stored.
+        :param queue: the q in which the data is to be stored.
         :param features: a construct of tsfresh containing the feature extraction settings.
         :param data: the data chunk on which the features shall be
         :param id: the id of the data chunk passed one parameter before.
@@ -274,6 +276,9 @@ if __name__ == "__main__":
     database = Database()
     # Get the data sets we need from the database
     datasets = database.get_data_sets(exec_params["dataSets"])
+    # Extract the data sets out of all that stuff and name it as before.
+    # TODO if we need the rest data also, we have to extract in before all the rest data from datasets.
+    datasets = [x["DataSet"] for x in datasets]
     # Prepare the data
     x_data, y_data = create_time_slices(datasets, *(exec_params[x] for x in ("slidingWindowSize", "slidingWindowStep")
                                                     if x in exec_params))

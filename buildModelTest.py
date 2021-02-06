@@ -72,7 +72,7 @@ class BuildModelTest(TestCase):
     def test_create_time_slices(self):
         self.fail()
 
-    @unittest.expectedFailure
+    @unittest.skip("TSFresh is not working as expected. Awaiting reparation.")
     def test_extract_features(self):
         self.fail()
 
