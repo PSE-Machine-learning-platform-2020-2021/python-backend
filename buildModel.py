@@ -32,7 +32,12 @@ def fetch_parameters():
     The json file needs to contain the following data in exact the described format in order to be usable:
 
     {
-        'dataSets': [
+        "sensors": [
+            "sensor name#i"
+
+        ],
+     
+        "dataSets": [
             1,
 
             <...>,
@@ -40,7 +45,7 @@ def fetch_parameters():
             42
         ],
 
-        'features': [
+        "features": [
             "<Feature#1>",
 
             "<...>",
@@ -48,15 +53,15 @@ def fetch_parameters():
             "<Feature#n>"
         ],
 
-        'scaler': "<Scaler>",
+        "scaler": "<Scaler>",
 
-        'classifier': "<Classifier>",
+        "classifier": "<Classifier>",
 
-        'trainingDataPercentage': 0.8,
+        "trainingDataPercentage": 0.8,
 
-        'slidingWindowSize': 128,
+        "slidingWindowSize": 128,
 
-        'slidingWindowStep': 64
+        "slidingWindowStep": 64
     }
 
     The numbers in 'datasets' are just the ids of the datasets to use in the model.
@@ -298,7 +303,7 @@ if __name__ == "__main__":
         scaler = ready_scalers[0]
     # Now preprocess our data through our scaler
     x_training_processed = preprocess_data(x_training, scaler, ready)
-    x_testing_processed = preprocess_data(x_testing, scaler, ready)
+    x_testing_processed = preprocess_data(x_testing, scaler, True)
     # as second to last step, train our classifier!
     train_classifier(x_training_processed, y_training, classifier)
     # as last, put everything in the data base and be done.
