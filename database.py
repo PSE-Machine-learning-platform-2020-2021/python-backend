@@ -92,28 +92,30 @@ class Database:
         scaler = pickle.loads(result[0]["Scaler"])
         return classifier, scaler
 
-    def put_stuff(self, scaler, data_set_ids, features, classifier):
+    def put_stuff(self, scaler, data_set_ids, features, sensors, classifier):
         """
         This method puts a scaler, a set of data set ids, a set of features and a classifier into a database.
         :param features: A list of used features for the scaler
         :param data_set_ids: A list of data set ids used for the scaler
         :param scaler: The scaler corresponding to the classifier
+        :param sensors: The sensors used for collecting the datasets of the model.
         :param classifier: A classifier from sklearn.
         :return: The Id of the classifier ("AI model ID").
         """
 
-        def put_classifier(cl: object) -> int:
+        def put_classifier(cl: object, sens: list) -> int:
             """
             This method puts a classifier into the classifier database table.
             If the underlying database connector mechanics raise Errors or Exceptions
             while doing this, they are not handled here.
             :param cl: The classifier itself.
+            :param sens: The sensors used in the datasets for the model.
             :return: the id of the classifier in its database table.
             """
             cursor = self.data_base.cursor()
             cl_input = pickle.dumps(cl)
-            q = """INSERT INTO classifiers (Classifier) VALUES (%s)"""
-            dt = cl_input,
+            q = """INSERT INTO classifiers (Classifier, Sensors) VALUES (%s, %s)"""
+            dt = cl_input, sens
             cursor.execute(q, dt)
             self.data_base.commit()
             return cursor.lastrowid
@@ -140,7 +142,7 @@ class Database:
             return cursor.lastrowid
 
         scaler_id = put_scaler(scaler, scaler.__class__.__name__, features, data_set_ids)
-        classifier_id = put_classifier(classifier)
+        classifier_id = put_classifier(classifier, sensors)
 
         if classifier_id != scaler_id:
             query = """UPDATE classifiers SET Scaler = %s WHERE Id = %s"""

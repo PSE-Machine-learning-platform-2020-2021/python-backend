@@ -32,7 +32,7 @@ The Scaler Table needs to meet following requirements:
 The Classifier Table needs to look like this:
 
     name = classifiers
-    columns = Id, Classifier, Scaler[, optional further columns]
+    columns = Id, Classifier, Sensors, Scaler[, optional further columns]
 
 ### Note for the PHP programmer who will do the environment script for this script:
 You must do first of all the following:

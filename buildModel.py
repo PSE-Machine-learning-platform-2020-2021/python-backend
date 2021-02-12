@@ -36,7 +36,7 @@ def fetch_parameters():
             "sensor name#i"
 
         ],
-     
+
         "dataSets": [
             1,
 
@@ -79,6 +79,8 @@ def fetch_parameters():
     If there is more information in the json file, this is no problem.
 
     There is no overall covering of the given specifications!
+
+    The order of appearance is not necessary.
     :return: All the contents of the specified json file as dict.
     """
     if len(sys.argv) < 2:
@@ -88,7 +90,7 @@ def fetch_parameters():
         data: dict = json.load(file)
         file.close()
     os.remove(file_path)
-    if "dataSets" not in data:
+    if "dataSets" not in data or "sensors" not in data:
         raise IndexError()
     if "features" not in data:
         data["features"] = []
@@ -307,6 +309,6 @@ if __name__ == "__main__":
     # as second to last step, train our classifier!
     train_classifier(x_training_processed, y_training, classifier)
     # as last, put everything in the data base and be done.
-    model_id = database.put_stuff(scaler, features, exec_params["dataSets"], classifier)
+    model_id = database.put_stuff(scaler, features, exec_params["dataSets"], exec_params["sensors"], classifier)
     # as very last, say our server hello, so that it sends an email.
     notify_server(model_id)
