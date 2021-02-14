@@ -7,7 +7,7 @@ import pickle
 import mysql.connector
 import pandas as pd
 
-from configReader import ConfigReader
+from src.config.configReader import ConfigReader
 
 
 class Database:

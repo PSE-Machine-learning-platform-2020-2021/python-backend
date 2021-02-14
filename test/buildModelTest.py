@@ -8,15 +8,13 @@ import unittest
 from contextlib import redirect_stdout
 from unittest import TestCase
 
-import numpy as np
 import pandas as pd
 
 from sklearn.dummy import DummyClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler, Normalizer
 
-import buildModel
-
+from src.buildModel import buildModel
 
 import sys
 

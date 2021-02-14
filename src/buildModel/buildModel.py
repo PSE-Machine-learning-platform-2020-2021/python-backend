@@ -17,7 +17,7 @@ from sklearn.preprocessing import Normalizer, MinMaxScaler, QuantileTransformer,
 from sklearn.svm import SVC
 from tsfresh.feature_extraction import ComprehensiveFCParameters
 
-from database import Database
+from src.database.database import Database
 
 
 class IllegalArgumentError(OSError):

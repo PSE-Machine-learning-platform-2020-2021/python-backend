@@ -6,14 +6,8 @@ import json
 import os
 import sys
 
-from buildModel import IllegalArgumentError
-from database import Database
-from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import Normalizer, MinMaxScaler, QuantileTransformer, RobustScaler, StandardScaler
-from sklearn.svm import SVC
+from src.buildModel.buildModel import IllegalArgumentError
+from src.database.database import Database
 
 
 def fetch_parameters():
