@@ -106,6 +106,7 @@ def choose_features(features_from_outside):
     """
     This method transforms a list of feature names out of the Extraction enum from TypeScript into a list of
     ready-to-use features.
+
     :param features_from_outside: The feature list from Extraction enum
     :return: A list consisting of their corresponding name here.
     """
@@ -129,6 +130,7 @@ def choose_features(features_from_outside):
 def choose_scaler(name: str):
     """
     This method acts as a switch over the scaler type and creates out of a given type name a scaler object.
+
     :param name: The name of the scaler type as of Preprocessing enum in TypeScript
     :return: A Scaler object matching the type of the passed type name
     """
@@ -148,6 +150,7 @@ def choose_scaler(name: str):
 def choose_classifier(name: str):
     """
     This method acts as a switch over the classifier type and creates out of a given type name a classifier object.
+
     :param name: The name of the classifier type as of Classifier enum in TypeScript
     :return: A Classifier object matching the type of the passed type name (more or less). MLP creates no ponies.
     """
