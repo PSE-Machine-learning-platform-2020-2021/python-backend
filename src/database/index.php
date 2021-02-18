@@ -3,9 +3,7 @@ error_reporting(E_ALL);
 ini_set("display_errors", 1);
 ob_start();
 session_start();
-var_dump($_POST);
-die();
-	
+
 class DataBaseConnection extends PDO {
     public $last_statement;
     /**
@@ -43,33 +41,108 @@ class DataBaseConnection extends PDO {
     }
 
     /**
+	 * Executes mindlessly an SQL query Please use only for queries without input data.
      * @param $what SQL query to execute
      */
     private function get_data($what) {
         $this->last_statement = $this->prepare($what);
         $this->last_statement->execute();
 		$this->last_statement->setFetchMode(parent::FETCH_ASSOC);
-        $result = [];
-        foreach($this->last_statement->fetchAll() as $k=>$v) {
+    }
+
+	/**
+	 * Retrieves meta data about languages from corresponding database table.
+	 */
+    public function get_language_metas() {
+        $sql = "SELECT languageCode, languageName FROM Language;";
+        $this->get_data($sql);
+		$result = [];
+        foreach($this->last_statement->fetchAll() as $k => $v) {
             $result[$k] = $v;
         }
 		header("Content-Type: application/json");
-        print_r(json_encode($assoc_result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
-    }
-
-    public function get_language_metas() {
-        $sql = "SELECT languageCode, languageName from Language;";
-        $this->get_data($sql);
+        print_r(json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
     }
 	
+	/**
+	 * As soon as we have found out how to post correctly, we will use post variable again.
+	 */
 	public function load_language($params) {
 		$query_suffix = "";
-		foreach($params as $k => $v) {
-			$query_suffix .= "$k = $v OR";
+		foreach(json_decode(file_get_contents("php://input"), true) as $k => $v) {
+			$query_suffix .= "${k} = \"${v}\" OR";
 		}
-		$query_suffix = substr($query_suffix, 0, -3) . ";";
-		$sql = "SELECT language from Language WHERE" . $query_suffix;
+		$query_suffix = substr($query_suffix, 0, -3);
+		$sql = "SELECT language FROM Language WHERE " . $query_suffix;
         $this->get_data($sql);
+		$result = $this->last_statement->fetch()["language"];
+		header("Content-Type: application/json");
+        echo $result;
+	}
+	
+	public function create_project($params) {
+		header("Content-Type: application/json");
+        echo "{}";	
+	}
+	
+	public function register_device($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function create_data_set($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function send_data_point($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function load_project($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function get_project_metas($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function delete_data_set($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function register_admin($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function register_dataminer($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function register_ai_model_user($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+
+	public function login_admin($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function logout_admin($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function send_label($params) {
+		header("Content-Type: application/json");
+        echo "{}";
 	}
 }
 
@@ -82,7 +155,20 @@ switch($_GET["action"]) {
 	    eval("\$db->${_GET["action"]}();");
         break;
     case "load_language":
-		eval("\$db->${_GET["action"]}(${_POST["params"]});");
+	case "create_project":
+	case "register_device":
+	case "create_data_set":
+	case "send_data_point":
+	case "load_project":
+	case "get_project_metas":
+	case "delete_data_set":
+	case "register_admin":
+	case "register_dataminer":
+	case "register_ai_model_user":
+	case "login_admin":
+	case "logout_admin":
+	case "send_label":
+		eval("\$db->${_GET["action"]}(\$_POST);");
 		break;
 	default:
         throw new BadMethodCallException("This value is illegal. Intelligence Agency is informed.");
