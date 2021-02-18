@@ -3,7 +3,9 @@ error_reporting(E_ALL);
 ini_set("display_errors", 1);
 ob_start();
 session_start();
-
+var_dump($_POST);
+die();
+	
 class DataBaseConnection extends PDO {
     public $last_statement;
     /**
@@ -46,19 +48,29 @@ class DataBaseConnection extends PDO {
     private function get_data($what) {
         $this->last_statement = $this->prepare($what);
         $this->last_statement->execute();
-    }
-
-    public function get_language_metas() {
-        $sql = "SELECT LanguageCode AS languageCode, LanguageName AS languageName from Language;";
-        $this->get_data($sql);
-        $this->last_statement->setFetchMode(parent::FETCH_ASSOC);
-        $assoc_result = [];
+		$this->last_statement->setFetchMode(parent::FETCH_ASSOC);
+        $result = [];
         foreach($this->last_statement->fetchAll() as $k=>$v) {
-            $assoc_result[$k] = $v;
+            $result[$k] = $v;
         }
 		header("Content-Type: application/json");
         print_r(json_encode($assoc_result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
     }
+
+    public function get_language_metas() {
+        $sql = "SELECT languageCode, languageName from Language;";
+        $this->get_data($sql);
+    }
+	
+	public function load_language($params) {
+		$query_suffix = "";
+		foreach($params as $k => $v) {
+			$query_suffix .= "$k = $v OR";
+		}
+		$query_suffix = substr($query_suffix, 0, -3) . ";";
+		$sql = "SELECT language from Language WHERE" . $query_suffix;
+        $this->get_data($sql);
+	}
 }
 
 if(!isset($_GET["action"])) {
@@ -67,9 +79,12 @@ if(!isset($_GET["action"])) {
 $db = new DataBaseConnection();
 switch($_GET["action"]) {
     case "get_language_metas":
-        eval("\$db->${_GET["action"]}();");
+	    eval("\$db->${_GET["action"]}();");
         break;
-    default:
+    case "load_language":
+		eval("\$db->${_GET["action"]}(${_POST["params"]});");
+		break;
+	default:
         throw new BadMethodCallException("This value is illegal. Intelligence Agency is informed.");
 }
 ob_end_flush();
