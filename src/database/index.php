@@ -1,8 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
 ob_start();
 session_start();
 
 class DataBaseConnection extends PDO {
+    public $last_statement;
     /**
      * Creates a database connection
      * @param $file - a json file containing the following JSON data:
@@ -13,7 +16,8 @@ class DataBaseConnection extends PDO {
      *                    "password": ""
      *                }
      *                Whereof db is the name of the database to connect to.
-     */
+     *
+    */
     public function __construct($file = "config.json") {
         $connection_data = json_decode(file_get_contents($file), true);
         if(!isset($connection_data["host"], $connection_data["db"]) and !isset($connection_data["dns"])) {
@@ -23,7 +27,7 @@ class DataBaseConnection extends PDO {
             throw new InvalidArgumentException("Authentication credentials not included!");
         }
         $dns = "";
-        if (isset($connection_data["dns"]) {
+        if (isset($connection_data["dns"])) {
             $dns .= $connection_data["dns"];
         }
         else {
@@ -37,7 +41,7 @@ class DataBaseConnection extends PDO {
     }
 
     /**
-     *
+     * @param $what SQL query to execute
      */
     private function get_data($what) {
         $this->last_statement = $this->prepare($what);
@@ -45,13 +49,14 @@ class DataBaseConnection extends PDO {
     }
 
     public function get_language_metas() {
-        $sql = "SELECT LanguageCode, LanguageName from Language";
+        $sql = "SELECT LanguageCode AS languageCode, LanguageName AS languageName from Language;";
         $this->get_data($sql);
-        $result = $this->last_statement->setFetchMode(parent::FETCH_ASSOC);
-        $assoc_result = []
-        foreach($stmt->fetchAll() as $k=>$v) {
+        $this->last_statement->setFetchMode(parent::FETCH_ASSOC);
+        $assoc_result = [];
+        foreach($this->last_statement->fetchAll() as $k=>$v) {
             $assoc_result[$k] = $v;
         }
+		header("Content-Type: application/json");
         print_r(json_encode($assoc_result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
     }
 }
@@ -62,7 +67,7 @@ if(!isset($_GET["action"])) {
 $db = new DataBaseConnection();
 switch($_GET["action"]) {
     case "get_language_metas":
-        eval("$db->" . $_GET["action"] . "();");
+        eval("\$db->${_GET["action"]}();");
         break;
     default:
         throw new BadMethodCallException("This value is illegal. Intelligence Agency is informed.");
