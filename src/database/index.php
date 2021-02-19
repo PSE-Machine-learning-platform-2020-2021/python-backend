@@ -69,7 +69,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function load_language($params) {
 		$query_suffix = "";
-		foreach(json_decode(file_get_contents("php://input"), true) as $k => $v) {
+		foreach($params as $k => $v) {
 			$query_suffix .= "${k} = \"${v}\" OR";
 		}
 		$query_suffix = substr($query_suffix, 0, -3);
@@ -154,7 +154,7 @@ if(!isset($_GET["action"])) {
 $db = new DataBaseConnection();
 
 # Ensure that always a good value in $_POST
-if($result = json_decode(file_get_contents("php://input"), true) !== null) {
+if(($result = json_decode(file_get_contents("php://input"), true)) !== null) {
 	$_POST = $result;
 }
 else if($_POST === null or !is_array($_POST)) {
