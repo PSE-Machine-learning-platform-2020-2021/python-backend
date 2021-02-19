@@ -157,7 +157,7 @@ $db = new DataBaseConnection();
 if($result = json_decode(file_get_contents("php://input"), true) !== null) {
 	$_POST = $result;
 }
-else if($_POST === null) {
+else if($_POST === null or !is_array($_POST)) {
 	$_POST = [];
 }
 
