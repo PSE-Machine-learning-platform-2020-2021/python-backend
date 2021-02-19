@@ -81,8 +81,23 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function create_project($params) {
+		$result = [];
+		
+		# Create Session id
+		$this->last_statement = $this->prepare("INSERT INTO Session () VALUES ()");
+		$this->last_statement->execute();
+		$result["sessionID"] = $this->lastInsertId();
+		
+		# Execute the real statement
+		$sql = "INSERT INTO Project (adminID, name, sessionID) VALUES (?, ?, ?)";
+		$this->last_statement = $this->prepare($what);
+		$this->last_statement->bindValue(1, $params["userID"], PDO::PARAM_INT);
+		$this->last_statement->bindValue(2, $params["projectName"]);
+		$this->last_statement->bindValue(3, $result["sessionID"], PDO::PARAM_INT);
+		$this->last_statement->execute();
+		$result["projectID"] = $this->lastInsertId();
 		header("Content-Type: application/json");
-        echo "{}";	
+        echo json_encode($result);	
 	}
 	
 	public function register_device($params) {
