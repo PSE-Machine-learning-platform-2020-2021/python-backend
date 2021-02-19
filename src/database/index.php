@@ -137,20 +137,47 @@ class DataBaseConnection extends PDO {
 		# 	adminEmail
 		# Missing fields:
 		#	aiModelID
-		#	
 		
-		$q1 = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};\r\n";
-		$q1 .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};\r\n";
-		$q1 .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]});";
-		$this->get_data($q1);
-		$result = $this->last_statement->fetchAll()
+		# Build up our mighty multi query and execute it
+		$sql = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};\r\n";
+		$sql .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};\r\n";
+		$sql .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]});";
+		$this->get_data($sql);
+		$result = $this->last_statement->fetchAll();
+		
+		# Print out result.
 		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
+	/**
+	 * Requests all project with all affiliated data belonging to a specific user.
+	 * @param $params['userID'] - The number associated with the specific user from description.
+	 * @return All projects.
+	 */
 	public function get_project_metas($params) {
+		# Unused params
+		# 	adminEmail
+		
+		$result = [];
+		$sql = "SELECT projectID, name as projectName FROM Project WHERE adminID = ${params["userID"]}";
+		$this->get_data($sql);
+		foreach($this->last_statement->fetchAll(); as $v) {
+			$r = [];
+			$r = array_merge($r, $v);
+			$sql = "SELECT aiModelID as AIModelID FROM AIModel WHERE projectID = ${v["projectID"]}";
+			$this->get_data($sql);
+			$ai_model_ids = [];
+			foreach($this->last_statement->fetchAll(PDO::FETCH_NUM); as $id) {
+				$ai_model_ids[] = $id[0];
+			}
+			$r["AIModelID"] = $ai_model_ids;
+			$result[] = $r;
+		}
+		
+		# Print out result.
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
 	public function delete_data_set($params) {
