@@ -78,6 +78,9 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function create_project($params) {
+		# Unused params:
+		#	adminEmail
+		
 		$result = [];
 		
 		# Create Session id
@@ -93,11 +96,21 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->bindValue(3, $result["sessionID"], PDO::PARAM_INT);
 		$this->last_statement->execute();
 		$result["projectID"] = $this->lastInsertId();
+		
+		# Print out result
 		header("Content-Type: application/json");
-        echo json_encode($result);	
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);	
 	}
 	
 	public function create_data_set($params) {
+		# Unused params:
+		#	dataRow
+		# Abused params:
+		# 	sessionID
+		# Not filled fields:
+		# 	userDataSetID
+		
+		# Execute statement
 		$sql = "INSERT INTO Dataset (projectID, userID, dataSetName, projectAdminID) VALUES (?, ?, ?, ?)";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->bindValue(1, $params["projectID"], PDO::PARAM_INT);
@@ -105,19 +118,34 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->bindValue(3, $params["dataSetName"]);
 		$this->last_statement->bindValue(4, $params["sessionID"], PDO::PARAM_INT);
 		$this->last_statement->execute();
+		
+		# Print out result
 		header("Content-Type: application/json");
 		echo "{${this->lastInsertId()}";
 	}
 	
 	public function send_data_point($params) {
+		# Database table columns and functions params do not match.
+		# No Implementation due to that.
 		
 		header("Content-Type: application/json");
         echo "{}";
 	}
 	
 	public function load_project($params) {
+		# Unused params
+		# 	adminEmail
+		# Missing fields:
+		#	aiModelID
+		#	
+		
+		$q1 = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};\r\n";
+		$q1 .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};\r\n";
+		$q1 .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]});";
+		$this->get_data($q1);
+		$result = $this->last_statement->fetchAll()
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
 	public function get_project_metas($params) {
