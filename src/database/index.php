@@ -64,9 +64,6 @@ class DataBaseConnection extends PDO {
         print_r(json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
     }
 	
-	/**
-	 * As soon as we have found out how to post correctly, we will use post variable again.
-	 */
 	public function load_language($params) {
 		$query_suffix = "";
 		foreach($params as $k => $v) {
@@ -90,7 +87,7 @@ class DataBaseConnection extends PDO {
 		
 		# Execute the real statement
 		$sql = "INSERT INTO Project (adminID, name, sessionID) VALUES (?, ?, ?)";
-		$this->last_statement = $this->prepare($what);
+		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->bindValue(1, $params["userID"], PDO::PARAM_INT);
 		$this->last_statement->bindValue(2, $params["projectName"]);
 		$this->last_statement->bindValue(3, $result["sessionID"], PDO::PARAM_INT);
@@ -100,17 +97,20 @@ class DataBaseConnection extends PDO {
         echo json_encode($result);	
 	}
 	
-	public function register_device($params) {
-		header("Content-Type: application/json");
-        echo "{}";
-	}
-	
 	public function create_data_set($params) {
+		$sql = "INSERT INTO Dataset (projectID, userID, dataSetName, projectAdminID) VALUES (?, ?, ?, ?)";
+		$this->last_statement = $this->prepare($sql);
+		$this->last_statement->bindValue(1, $params["projectID"], PDO::PARAM_INT);
+		$this->last_statement->bindValue(2, $params["userID"], PDO::PARAM_INT);
+		$this->last_statement->bindValue(3, $params["dataSetName"]);
+		$this->last_statement->bindValue(4, $params["sessionID"], PDO::PARAM_INT);
+		$this->last_statement->execute();
 		header("Content-Type: application/json");
-        echo "{}";
+		echo "{${this->lastInsertId()}";
 	}
 	
 	public function send_data_point($params) {
+		
 		header("Content-Type: application/json");
         echo "{}";
 	}
@@ -126,6 +126,11 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function delete_data_set($params) {
+		header("Content-Type: application/json");
+        echo "{}";
+	}
+	
+	public function register_device($params) {
 		header("Content-Type: application/json");
         echo "{}";
 	}
