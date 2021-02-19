@@ -146,10 +146,22 @@ class DataBaseConnection extends PDO {
 	}
 }
 
+# Stop idle Script calls.
 if(!isset($_GET["action"])) {
     throw new InvalidArgumentException("Job not specified!");
 }
+
 $db = new DataBaseConnection();
+
+# Ensure that always a good value in $_POST
+if($result = json_decode(file_get_contents("php://input"), true) !== null) {
+	$_POST = $result;
+}
+else if($_POST === null) {
+	$_POST = [];
+}
+
+# Ensure that only valid tasks are executed
 switch($_GET["action"]) {
     case "get_language_metas":
 	    eval("\$db->${_GET["action"]}();");
