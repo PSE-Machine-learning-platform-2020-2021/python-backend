@@ -43,11 +43,13 @@ class DataBaseConnection extends PDO {
     /**
 	 * Executes mindlessly an SQL query Please use only for queries without input data.
      * @param $what SQL query to execute
+	 * @return true if query was successful, false otherwise, as PDOStatement::execute does.
      */
     private function get_data($what) {
         $this->last_statement = $this->prepare($what);
-        $this->last_statement->execute();
+        $result = $this->last_statement->execute();
 		$this->last_statement->setFetchMode(parent::FETCH_ASSOC);
+		return $result;
     }
 
 	/**
@@ -121,7 +123,7 @@ class DataBaseConnection extends PDO {
 		
 		# Print out result
 		header("Content-Type: application/json");
-		echo "{${this->lastInsertId()}";
+		echo '{' . $this->lastInsertId() . '}';
 	}
 	
 	public function send_data_point($params) {
@@ -139,8 +141,8 @@ class DataBaseConnection extends PDO {
 		#	aiModelID
 		
 		# Build up our mighty multi query and execute it
-		$sql = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};\r\n";
-		$sql .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};\r\n";
+		$sql = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};";
+		$sql .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};";
 		$sql .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]});";
 		$this->get_data($sql);
 		$result = $this->last_statement->fetchAll();
@@ -181,28 +183,55 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function delete_data_set($params) {
-		header("Content-Type: application/json");
-        echo "{}";
-	}
-	
-	public function register_device($params) {
-		header("Content-Type: application/json");
-        echo "{}";
+		
+		# Build and execute statement
+		$sql = "DELETE FROM Datarow WHERE datasetID = ${params["dataSetID"]};\r\n";
+		$sql .= "DELETE FROM Dataset WHERE datasetID = ${params["dataSetID"]} AND userID = ${params["userID"]} AND projectID = ${params["projectID"]}";
+		$result = $this->get_data($sql);
+		
+		# Print out result.
+		header("Content-Type: text/plain");
+        echo "$result";
 	}
 	
 	public function register_admin($params) {
+		# Missing fields
+		# 	adminName
+		# Odd params
+		# 	device - wo soll das denn hin und wo ist register_device abgeblieben? - Rückgabe fehlt entsprechend.
+		
+		$result = [];
+		
+		# Build and execute statement.
+		$sql = "INSERT INTO Admin (password, eMail) VALUES (?, ?);";
+		$this->last_statement = $this->prepare($sql);
+		$this->last_statement->bindValue(1, $params["password"]);
+		$this->last_statement->bindValue(2, $params["adminEmail"]);
+		$this->last_statement->execute();
+		$result["adminID"] = $this->lastInsertId();
+				
+		# Print out result.
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
 	public function register_dataminer($params) {
+		# Print out result.
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
 	public function register_ai_model_user($params) {
+		# Print out result.
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
+	}
+	
+	public function register_device($params) {
+		
+		# Print out result.
+		header("Content-Type: application/json");
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 
 	public function login_admin($params) {
