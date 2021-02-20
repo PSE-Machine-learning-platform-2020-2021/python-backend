@@ -81,7 +81,7 @@ class DataBaseConnection extends PDO {
 	
 	public function create_project($params) {
 		# Unused params:
-		#	adminEmail
+		#	adminEmail - check in admin table, if given email adress matches that one associated with given user id
 		
 		$result = [];
 		
@@ -106,11 +106,11 @@ class DataBaseConnection extends PDO {
 	
 	public function create_data_set($params) {
 		# Unused params:
-		#	dataRow
-		# Abused params:
-		# 	sessionID
+		#	dataRow - Erzeuge neue Datenreihen mit den angegebenen Parametern in der zugehörigen Tabelle und assoziiere das DataSet mit den Datenreihen
 		# Not filled fields:
 		# 	userDataSetID
+		
+		# Build and execute the statement retrieving us our project
 		
 		# Execute statement
 		$sql = "INSERT INTO Dataset (projectID, userID, dataSetName, projectAdminID) VALUES (?, ?, ?, ?)";
@@ -127,8 +127,8 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function send_data_point($params) {
-		# Database table columns and functions params do not match.
-		# No Implementation due to that.
+		# Auftrag: Die dataJSON/CSV-Spalte in der Datenreihen-Tabelle um den jüngsten Datenpunkt verlängern. in der richtigen Zeile natürlich.
+		# Das JSON-Format soll so aussehen: [{Datensatz}, {Datensatz}, ...]
 		
 		header("Content-Type: application/json");
         echo "{}";
@@ -136,14 +136,15 @@ class DataBaseConnection extends PDO {
 	
 	public function load_project($params) {
 		# Unused params
-		# 	adminEmail
+		# 	adminEmail - siehe create project - erstell dafür ne private Funktion
 		# Missing fields:
-		#	aiModelID
+		#	aiModelID - IDs aus der entsprechenden Tabelle rausziehen. Ordentliche Abfrage nach Projekt-ID und Projekt-Admin-ID.
+		# Auftrag: Abfragen in ein Statement über mehrere Tabellen hinweg zusammenziehen.
 		
 		# Build up our mighty multi query and execute it
 		$sql = "SELECT * FROM Project WHERE projectID = ${params["projectID"]} AND adminID = ${params["userID"]};";
-		$sql .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]};";
-		$sql .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]});";
+		$sql .= "SELECT * FROM Dataset WHERE projectID = ${params["projectID"]} AND projectAdminID = ${params["userID"]};";
+		$sql .= "SELECT * FROM Datarow WHERE datasetID IN (SELECT dataSetID FROM Dataset WHERE projectID = ${params["projectID"]} AND projectAdminID = ${params["userID"]});";
 		$this->get_data($sql);
 		$result = $this->last_statement->fetchAll();
 		
@@ -159,7 +160,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function get_project_metas($params) {
 		# Unused params
-		# 	adminEmail
+		# 	adminEmail - siehe createProject
 		
 		$result = [];
 		$sql = "SELECT projectID, name as projectName FROM Project WHERE adminID = ${params["userID"]}";
@@ -183,6 +184,7 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function delete_data_set($params) {
+		# Admin-Email einbinden - siehe create_project
 		
 		# Build and execute statement
 		$sql = "DELETE FROM Datarow WHERE datasetID = ${params["dataSetID"]};\r\n";
@@ -190,25 +192,31 @@ class DataBaseConnection extends PDO {
 		$result = $this->get_data($sql);
 		
 		# Print out result.
-		header("Content-Type: text/plain");
-        echo "$result";
+		header("Content-Type: application/json");
+        echo '{"result": ' . $result . '}';
 	}
 	
-	public function register_admin($params) {
-		# Missing fields
-		# 	adminName
-		# Odd params
-		# 	device - wo soll das denn hin und wo ist register_device abgeblieben? - Rückgabe fehlt entsprechend.
-		
+	public function register_admin($params) {		
 		$result = [];
 		
 		# Build and execute statement.
-		$sql = "INSERT INTO Admin (password, eMail) VALUES (?, ?);";
+		$sql = "INSERT INTO User (name) VALUES (?);";
 		$this->last_statement = $this->prepare($sql);
-		$this->last_statement->bindValue(1, $params["password"]);
-		$this->last_statement->bindValue(2, $params["adminEmail"]);
-		$this->last_statement->execute();
+		$this->last_statement->bindValue(1, $params["adminName"]);
+		$this->execute();
 		$result["adminID"] = $this->lastInsertId();
+		$sql = "INSERT INTO Admin (userID, password, eMail) VALUES (?, ?, ?);";
+		$this->last_statement = $this->prepare($sql);
+		$this->last_statement->bindValue(1, $result["adminID"]);
+		$this->last_statement->bindValue(2, password_hash($params["password"]));
+		$this->last_statement->bindValue(3, $params["adminEmail"]);
+		$this->last_statement->execute();
+		
+		# Create Device Statement
+		# ==> Eigene Funktion
+		# 	==> Prüfen, ob MAC-Adresse des jeweiligen Gerätes schon in der Tabelle existiert
+		
+		# ==> Anmelden in der Tabelle ConnectedUser
 				
 		# Print out result.
 		header("Content-Type: application/json");
@@ -230,19 +238,29 @@ class DataBaseConnection extends PDO {
 		$this->get_data($sql);
 		$result["project"] = $this->last_statement->fetch();
 		
-		# Print out result.
-		header("Content-Type: application/json");
-        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
-	}
-	
-	public function register_ai_model_user($params) {
+		# ==> Anmelden in der Tabelle ConnectedUser
+		# ==> Erzeugen des Gerätes in der Device-Tabelle
 		
 		# Print out result.
 		header("Content-Type: application/json");
-        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
+		echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
-	public function register_device($params) {
+# TODO Add possibility to registrate	
+#	public function register_ai_model_user($params) {
+#		
+#		# Print out result.
+#		header("Content-Type: application/json");
+#		echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
+#	}
+	
+	/**
+	 * Creates a new device in the Device table.
+	 *
+	 * @param 
+	 * @return
+	 */
+	private function register_device($params) {
 		
 		# Print out result.
 		header("Content-Type: application/json");
@@ -257,8 +275,8 @@ class DataBaseConnection extends PDO {
 		$this->get_data($sql);
 		
 		foreach($this->last_statement->fetchAll() as $row) {
-			if($params["password"] === $row["password"]) {
-				$sql = "SELECT userID as adminID, eMail as email FROM Admin WHERE userID = ${row["userID"]};";
+			if(password_verify($params["password"], $row["password"])) {
+				$sql = "SELECT userID AS adminID, eMail AS email, name AS adminName, deviceID FROM Admin, User, Device WHERE userID = ${row["userID"]};";
 				$this->get_data($sql);
 				$result["admin"] = $this->last_statement->fetch();
 				break;
@@ -271,9 +289,22 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function create_label($params) {
+		# Sitzung und DatenSatzID benötigt für Zugriff auf DatenSatz
+		# Label wird genau so, wie es ist in seine Tabelle eingetragen
+		# Rückgabe ist die Label-ID
 		$sql = "INSERT INTO Label () VALUES ();";
 		header("Content-Type: application/json");
         echo "{}";
+	}
+	
+	public function set_label($params) {
+		# Neue Werte setzen - Parameter wie oben.
+		# LabelID wird zum Finden des Labels verwendet.
+		# Rückgabe ist true/false für Erfolg/Fehlschlag
+	}
+	
+	public function delete_label($params) {
+		# Funktioniert genauso wie set_label; Name ist Programm.
 	}
 }
 
