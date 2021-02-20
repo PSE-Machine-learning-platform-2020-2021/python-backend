@@ -216,12 +216,27 @@ class DataBaseConnection extends PDO {
 	}
 	
 	public function register_dataminer($params) {
+		$result = [];
+		
+		# Build and execute registration statement
+		$sql = "INSERT INTO User (name) VALUES (?);"
+		$this->last_statement = $this->prepare($sql);
+		$this->last_statement->bindValue(1, $params["dataminerName"]);
+		$this->last_statement->execute();
+		$result["dataminerID"] = $this->lastInsertId();
+		
+		# Build and execute 'get project' statement
+		$sql = "SELECT projectID, name as projectName, sessionID FROM Project WHERE sessionID = ${params["sessionID"]};";
+		$this->get_data($sql);
+		$result["project"] = $this->last_statement->fetch();
+		
 		# Print out result.
 		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
 	public function register_ai_model_user($params) {
+		
 		# Print out result.
 		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
@@ -235,16 +250,28 @@ class DataBaseConnection extends PDO {
 	}
 
 	public function login_admin($params) {
+		$result = [];
+		
+		# Build and execute data comparing statement
+		$sql = "SELECT userID, password FROM Admin WHERE eMail = ${params["adminEmail"]};";
+		$this->get_data($sql);
+		
+		foreach($this->last_statement->fetchAll() as $row) {
+			if($params["password"] === $row["password"]) {
+				$sql = "SELECT userID as adminID, eMail as email FROM Admin WHERE userID = ${row["userID"]};";
+				$this->get_data($sql);
+				$result["admin"] = $this->last_statement->fetch();
+				break;
+			}
+		}
+		
+		# Print out result.
 		header("Content-Type: application/json");
-        echo "{}";
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
-	public function logout_admin($params) {
-		header("Content-Type: application/json");
-        echo "{}";
-	}
-	
-	public function send_label($params) {
+	public function create_label($params) {
+		$sql = "INSERT INTO Label () VALUES ();";
 		header("Content-Type: application/json");
         echo "{}";
 	}
