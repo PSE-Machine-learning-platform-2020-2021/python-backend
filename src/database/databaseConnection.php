@@ -262,7 +262,8 @@ class DataBaseConnection extends PDO {
 		$sql = "INSERT INTO User (name) VALUES (?);";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->bindValue(1, $params["adminName"]);
-		$this->execute();
+		
+		$this->last_statement->execute();
 		$result["adminID"] = $this->lastInsertId();
 		$sql = "INSERT INTO Admin (userID, password, eMail) VALUES (?, ?, ?);";
 		$this->last_statement = $this->prepare($sql);
@@ -370,6 +371,7 @@ class DataBaseConnection extends PDO {
 		
 		# Build and execute data comparing statement
 		$sql = "SELECT userID, password FROM Admin WHERE eMail = {$params["adminEmail"]};";
+		echo $sql;
 		$this->get_data($sql);
 		
 		foreach($this->last_statement->fetchAll() as $row) {
