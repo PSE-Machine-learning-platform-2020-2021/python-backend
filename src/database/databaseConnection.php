@@ -268,11 +268,11 @@ class DataBaseConnection extends PDO {
 		$sql = "INSERT INTO Admin (userID, password, eMail) VALUES (?, ?, ?);";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->bindValue(1, $result["adminID"], PDO::PARAM_INT);
-		$this->last_statement->bindValue(2, password_hash($params["password"]));
+		$this->last_statement->bindValue(2, password_hash($params["password"], PASSWORD_DEFAULT));
 		$this->last_statement->bindValue(3, $params["adminEmail"]);
 		$this->last_statement->execute();
 		
-		$result["device"] = register_device($params["device"], $result["dataminerID"]);
+		$result["device"] = $this->register_device($params["device"], $result["adminID"]);
 				
 		# Print out result.
 		header("Content-Type: application/json");
@@ -294,7 +294,7 @@ class DataBaseConnection extends PDO {
 		$this->get_data($sql);
 		$result["project"] = $this->last_statement->fetch();
 		
-		$result["device"] = register_device($params["device"], $result["dataminerID"]);
+		$result["device"] = $this->register_device($params["device"], $result["dataminerID"]);
 		
 		# Print out result.
 		header("Content-Type: application/json");
@@ -322,7 +322,7 @@ class DataBaseConnection extends PDO {
 	 * @return the device id and the global sensor ids
 	 */
 	private function register_device($params, $user_id) {
-		$sql = "SELECT deviceID, userID FROM Device WHERE MACADDRESS = {$params["MACADRESS"]}";
+		$sql = "SELECT deviceID, userID FROM Device WHERE MACADDRESS = '{$params["MACADRESS"]}'";
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $row) {
 			if ($user_id === $row["userID"]) {
@@ -370,13 +370,12 @@ class DataBaseConnection extends PDO {
 		$result = [];
 		
 		# Build and execute data comparing statement
-		$sql = "SELECT userID, password FROM Admin WHERE eMail = {$params["adminEmail"]};";
-		echo $sql;
+		$sql = "SELECT userID, password FROM Admin WHERE eMail = \"{$params["adminEmail"]}\";";
 		$this->get_data($sql);
 		
 		foreach($this->last_statement->fetchAll() as $row) {
 			if(password_verify($params["password"], $row["password"])) {
-				$sql = "SELECT userID AS adminID, eMail AS email, name AS adminName, deviceID FROM Admin, User, Device WHERE userID = {$row["userID"]};";
+				$sql = "SELECT User.userID AS adminID, eMail AS email, User.name AS adminName, deviceID FROM Admin, User, Device WHERE User.userID = {$row["userID"]} AND Admin.userID = {$row["userID"]} AND Device.userID = {$row["userID"]} ;";
 				$this->get_data($sql);
 				$result["admin"] = $this->last_statement->fetch();
 				break;
