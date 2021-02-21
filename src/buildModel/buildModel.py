@@ -320,7 +320,8 @@ if __name__ == "__main__":
                                                     for x in ("slidingWindowSize", "slidingWindowStep")
                                                     if x in exec_params})
     # Extract all the features desired.
-    featured_data = extract_features(features, x_data)
+    # TODO change the feature extraction module to a working one.
+#    featured_data = extract_features(features, x_data)
     # After that, part our data into one part of training and one part of testing data.
     if "trainingDataPercentage" in exec_params:
         x_training, y_training, x_testing, y_testing = partition_data(featured_data, y_data,
