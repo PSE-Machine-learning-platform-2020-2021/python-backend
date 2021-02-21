@@ -4,7 +4,7 @@ ini_set("display_errors", 1);
 ob_start();
 session_start();
 
-$result = json_decode(file_get_contents("php://input"), true)
+$result = json_decode(file_get_contents("php://input"), true);
 
 # Ensure that we have all data required:
 if(!is_array($result) OR !isset($result["dataSets"], $result["classifier"]) OR !is_array($result["dataSets"]) OR $_SERVER["REQUEST_METHOD"] !== "POST") {
