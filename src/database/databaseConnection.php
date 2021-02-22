@@ -255,7 +255,15 @@ class DataBaseConnection extends PDO {
         echo '{"result": ' . $result . '}';
 	}
 	
-	public function register_admin($params) {		
+	public function register_admin($params) {	
+		$sql = "SELECT * FROM Admin WHERE eMail = \"{$params["adminEmail"]}\";";
+		$this->get_data($sql);
+		if (count($this->last_statement->fetchAll()) > 0) {
+			header("Content-Type: application/json");
+			echo "{\"adminID\": -1, \"device\": null}";
+			return;
+		}
+	
 		$result = [];
 		
 		# Build and execute statement.
