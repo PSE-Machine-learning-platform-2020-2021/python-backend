@@ -2,3 +2,4 @@
 .idea/
 temp.txt
 src/database/config.json
+*.txt
