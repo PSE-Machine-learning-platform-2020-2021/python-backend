@@ -281,6 +281,9 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->execute();
 		
 		$result["device"] = $this->register_device($params["device"], $result["adminID"]);
+		
+		session_start();
+		$_SESSION["loogged_in"] = $result["adminID"];
 				
 		# Print out result.
 		header("Content-Type: application/json");
@@ -389,6 +392,9 @@ class DataBaseConnection extends PDO {
 				break;
 			}
 		}
+		
+		session_start();
+		$_SESSION["logged_in"] = $result["admin"]["adminID"];
 		
 		# Print out result.
 		header("Content-Type: application/json");

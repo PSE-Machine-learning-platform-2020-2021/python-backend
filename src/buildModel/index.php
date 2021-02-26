@@ -38,4 +38,6 @@ fclose($file);
 $output = exec("python 3.9 classify.py " . $fn);
 # TODO build that damn email!!!
 # mail();
+# E-Mail kommt über 
+$sql = "SELECT eMail FROM Admin WHERE userID = {$_SESSION["logged_in"]}";
 ?>

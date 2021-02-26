@@ -320,22 +320,16 @@ if __name__ == "__main__":
                                                     for x in ("slidingWindowSize", "slidingWindowStep")
                                                     if x in exec_params})
     # Extract all the features desired.
-    # TODO change the feature extraction module to a working one.
-#    featured_data = extract_features(features, x_data)
+    featured_data = extract_features(features, x_data)
+
     # After that, part our data into one part of training and one part of testing data.
     if "trainingDataPercentage" in exec_params:
         x_training, y_training, x_testing, y_testing = partition_data(featured_data, y_data,
                                                                       exec_params["trainingDataPercentage"])
     else:
         x_training, y_training, x_testing, y_testing = partition_data(featured_data, y_data)
-    # Look up, if we can find a scaler matching our parameters.
-    ready_scalers = database.get_scalers(str(scaler), features, exec_params["dataSets"])
-    # Fit our scaler to our data sets - or leave that out because we already have one in our data base.
-    ready = len(ready_scalers) > 0
-    if ready:
-        scaler = ready_scalers[0]
     # Now preprocess our data through our scaler
-    x_training_processed = preprocess_data(x_training, scaler, ready)
+    x_training_processed = preprocess_data(x_training, scaler)
     x_testing_processed = preprocess_data(x_testing, scaler, True)
     # as second to last step, train our classifier!
     train_classifier(x_training_processed, y_training, classifier)

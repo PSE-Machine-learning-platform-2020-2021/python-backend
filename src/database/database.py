@@ -13,7 +13,6 @@ from src.config.configReader import ConfigReader
 class Database:
     """
     This class bundles together all needed database accessing needed for current plan of python part.
-    TODO Get the data base running!
     """
 
     def __init__(self):
