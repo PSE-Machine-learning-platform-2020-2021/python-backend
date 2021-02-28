@@ -26,12 +26,12 @@ class Database:
         db_data = config.get_values("DB")
         self.data_base = mysql.connector.connect(*db_data)
 
-    def get_data_sets(self, indices: list[int]) -> list[pd.DataFrame]:
+    def get_data_sets(self, data_sets: list[int]) -> list[pd.DataFrame]:
         """
         This method retrieves all datasets specified by parameter indices from the database specified in config file.
         ATTENTION: This method does atm not load and append any labels to the data! But a label column is appended.
         TODO: Change that.
-        :param indices: A list containing the database indices of all of the desired data sets for further processing.
+        :param data_sets: A list containing the database indices of all of the desired data sets for further processing.
         :return: A tuple containing all data rows found and matching one of the passed data set ids, grouped together
                  by their data set id into pandas Dataframe objects.
         """
@@ -40,11 +40,11 @@ class Database:
         # the name of the sensor that was used for them.
         query = """SELECT dataJSON, 
                           name, 
-                          (SELECT sensorName FROM Sensor WHERE Sensor.sensorID = Datarow.sensorID) AS sensorName,
+                          (SELECT sensorName FROM Sensor WHERE Sensor.sensorID = Datarow.sensorID) AS sensorName
                    FROM Datarow
                    WHERE datasetID = %s"""
         result: list[DataFrame] = []
-        for i in indices:
+        for i in data_sets:
             # Execute query for every single dataset
             cursor.execute(query, i)
             data_set: dict[str, dict] = {}
@@ -68,27 +68,24 @@ class Database:
                 x["label"] = [np.NaN for x in x.index]
         return result
 
-    def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:
+    def get_sensors(self, data_sets: list[int]) -> list[int]:
         """
-        This method gets all scalers out of their database table that have the corresponding
-        type and are fitted to the given datasets and features.
-        If the underlying database connector mechanics raise Errors or Exceptions
-        while doing this, they are not handled here.
-        :param features: All the features extracted on the data used within the scaler.
-        :param scaler_type: The class name of the scaler type as of <object>.__class__.__name__
-        :param data_set_ids: The ids of the datasets used.
-        :return: A tuple of zero or more Scalers from sklearn.
+        This method retrieves information from the Sensor database table.
+        This information contains the types of the sensors used in the
+        data sets whose ids are passed as this function's parameter.
+        :param data_sets: A list containing the numeric ids of one or more data sets.
+        :return: A list of numbers representing sensor types used in the data sets passed by id
         """
-        cursor = self.data_base.cursor()
-        cursor.execute("SELECT Scaler, Features, DataSets FROM scalers WHERE ScalerType = {st}".format(st=scaler_type))
-        result = cursor.fetchall()
-        features.sort()
-        data_set_ids.sort()
-        output = []
-        for x in result:
-            if x[1].sort() == features and x[2].sort() == data_set_ids:
-                output.append(pickle.loads(x[0]))
-        return tuple(output)
+        cursor = self.data_base.cursor(dictionary=True)
+        query = """SELECT sensorTypeID AS type
+                   FROM Sensor 
+                   WHERE sensorID 
+                   IN (SELECT sensorID FROM Datarow WHERE datasetID in %s)"""
+        cursor.execute(query, tuple(data_sets))
+        result: set[int] = []
+        for row in cursor.fetchall():
+            result |= row["type"]
+        return sorted(result)
 
     def get_stuff(self, classifier_id: int) -> tuple:
         """
