@@ -8,6 +8,7 @@ import pickle
 import mysql.connector
 import pandas as pd
 import numpy as np
+from pandas import DataFrame
 
 from src.config.configReader import ConfigReader
 
@@ -28,7 +29,7 @@ class Database:
     def get_data_sets(self, indices: list[int]) -> list[pd.DataFrame]:
         """
         This method retrieves all datasets specified by parameter indices from the database specified in config file.
-        ATTENTION: This method does atm not load and append any labels to the data!
+        ATTENTION: This method does atm not load and append any labels to the data! But a label column is appended.
         TODO: Change that.
         :param indices: A list containing the database indices of all of the desired data sets for further processing.
         :return: A tuple containing all data rows found and matching one of the passed data set ids, grouped together
@@ -42,24 +43,29 @@ class Database:
                           (SELECT sensorName FROM Sensor WHERE Sensor.sensorID = Datarow.sensorID) AS sensorName,
                    FROM Datarow
                    WHERE datasetID = %s"""
-        result = []
+        result: list[DataFrame] = []
         for i in indices:
-            # execute query for every single dataset
+            # Execute query for every single dataset
             cursor.execute(query, i)
-            data_set = {}
+            data_set: dict[str, dict] = {}
             times = set()
 
             # Integrate all the data rows found into the dataset
             for data_row in cursor.fetchall():
-                name = data_row["sensorName"] if data_row["name"] is None else data_row["name"]
+                name: str = data_row["sensorName"] if data_row["name"] is None else data_row["name"]
                 data_set[name] = {x["relativeTime"]: x["value"] for x in json.loads(data_row["dataJSON"])}
                 times |= set(data_set[name].keys())
 
-            # ensure that all data rows feature exactly equal sets of timestamps and in all cases have values there and
+            # Ensure that all data rows feature exactly equal sets of timestamps and in all cases have values there and
             # that all values are in correct ascending order by timestamp
             for key in data_set.keys():
                 data_set[key] = {x: np.NaN for x in sorted(times)} | data_set[key]
             result.append(pd.DataFrame(data_set))
+
+        # Ensure that there is always a label column ...
+        for x in result:
+            if "label" not in x:
+                x["label"] = [np.NaN for x in x.index]
         return result
 
     def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:
