@@ -82,7 +82,7 @@ class Database:
                    WHERE sensorID 
                    IN (SELECT sensorID FROM Datarow WHERE datasetID in %s)"""
         cursor.execute(query, tuple(data_sets))
-        result: set[int] = []
+        result: set[int] = set()
         for row in cursor.fetchall():
             result |= row["type"]
         return sorted(result)
@@ -116,63 +116,25 @@ class Database:
         scaler = pickle.loads(result[0]["Scaler"])
         return classifier, scaler
 
-    def put_stuff(self, scaler, data_set_ids, features, sensors, classifier):
+    def put_stuff(self, classifier, scaler, sensors, labels_table: dict[int, str] = None):
         """
-        This method puts a scaler, a set of data set ids, a set of features and a classifier into a database.
-        :param features: A list of used features for the scaler
-        :param data_set_ids: A list of data set ids used for the scaler
-        :param scaler: The scaler corresponding to the classifier
-        :param sensors: The sensors used for collecting the datasets of the model.
-        :param classifier: A classifier from sklearn.
+        This method puts a classifier, a scaler, the label-to-number association table and the list of sensor types
+        that were used when collecting the data for the data sets used in the training of the ai model into the
+        corresponding data base table.
+        :param classifier: A classifier from sklearn. It is then pickled and stored.
+        :param scaler: The scaler that was used to transform the training data for the classifier passed right before.
+        :param sensors: The sensors used for collecting the data of the data sets used as training data for the
+                        classifier passed as first parameter.
+        :param labels_table: A dict containing numbers as keys associating with label names. Those numbers which must be
+                             non-negative are used to classify input - or training - data by the ai model.
         :return: The Id of the classifier ("AI model ID").
         """
-
-        def put_classifier(cl: object, sens: list) -> int:
-            """
-            This method puts a classifier into the classifier database table.
-            If the underlying database connector mechanics raise Errors or Exceptions
-            while doing this, they are not handled here.
-            :param cl: The classifier itself.
-            :param sens: The sensors used in the datasets for the model.
-            :return: the id of the classifier in its database table.
-            """
-            cursor = self.data_base.cursor()
-            cl_input = pickle.dumps(cl)
-            q = """INSERT INTO classifiers (Classifier, Sensors) VALUES (%s, %s)"""
-            dt = cl_input, sens
-            cursor.execute(q, dt)
-            self.data_base.commit()
-            return cursor.lastrowid
-
-        def put_scaler(sc: object, scaler_type: str, ft: list, data_sets: list) -> int:
-            """
-            This method puts a new scaler into the scaler table in the database.
-            If the underlying database connector mechanics raise Errors or Exceptions
-            while doing this, they are not handled here.
-            :param ft: A list of all features that where extracted from the data used for this scaler.
-            :param sc: The scaler object itself
-            :param scaler_type: The type of the scaler object for later retrieving the scaler.
-            :param data_sets: The datasets the scaler was fitted to, also for later retrieving the scaler.
-            :return: The id of the scaler in its database table.
-            """
-            cursor = self.data_base.cursor()
-            data_sets.sort()
-            features.sort()
-            sc_input = pickle.dumps(sc)
-            q = """INSERT INTO scalers (Scaler, ScalerType, Features, DataSets) VALUES (%s, %s, %s, %s)"""
-            dt = sc_input, scaler_type, ft, data_sets
-            cursor.execute(q, dt)
-            self.data_base.commit()
-            return cursor.lastrowid
-
-        scaler_id = put_scaler(scaler, scaler.__class__.__name__, features, data_set_ids)
-        classifier_id = put_classifier(classifier, sensors)
-
-        if classifier_id != scaler_id:
-            query = """UPDATE classifiers SET Scaler = %s WHERE Id = %s"""
-            data_tuple = scaler_id, classifier_id
-            csr = self.data_base.cursor()
-            csr.execute(query, data_tuple)
-            self.data_base.commit()
-
-        return classifier_id
+        query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable) VALUES (%s, %s, %s, %s)"""
+        cursor = self.data_base.cursor()
+        cursor.execute(query,
+                       (pickle.dumps(classifier),
+                        pickle.dumps(scaler),
+                        json.dumps(sensors),
+                        json.dumps(labels_table)))
+        self.data_base.commit()
+        return cursor.lastrowid
