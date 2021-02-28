@@ -14,13 +14,12 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.svm import SVC
 from tsfresh.feature_extraction import ComprehensiveFCParameters
 
-
 if __name__ == "__main__":
     data_path = "../../../Entwurf/activity_recognition/activity_recognition/Workshop_Data"
     csv_file = "exp01_user01.csv"
 
-    label_dict = {1: "WALKING", 2: "WALKING_UPSTAIRS", 3: "WALKING_DOWNSTAIRS", 4: "SITTING", 5: "STANDING", 6: "LIYING",
-                  7: "OTHER"}
+    label_dict: dict[int, str] = {1: "WALKING", 2: "WALKING_UPSTAIRS", 3: "WALKING_DOWNSTAIRS", 4: "SITTING",
+                                  5: "STANDING", 6: "LYING", 7: "OTHER"}
 
     # # Data Preparation
     window_size = 128
@@ -58,14 +57,14 @@ if __name__ == "__main__":
         data_feature = tsfresh.extract_features(X[j], column_id="id", default_fc_parameters=settings)
         results.append(data_feature)
 
-#    temp = (X[0]).copy()
-#    temp["id"] = 1
-#    print("Temp Features")
-#    temp_feature = tsfresh.extract_features(temp, column_id="id", default_fc_parameters=settings, disable_progressbar=True)
+    #    temp = (X[0]).copy()
+    #    temp["id"] = 1
+    #    print("Temp Features")
+    #    temp_feature = tsfresh.extract_features(temp, column_id="id", default_fc_parameters=settings, disable_progressbar=True)
 
     # To save time, the features have been extracted.
     # Parallel computing?
-#    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
+    #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
     # ## Train Test Split
     train_x = results.iloc[:int(results.shape[0] * 0.8), :-1]
