@@ -91,7 +91,7 @@ def fetch_parameters() -> dict:
         data: dict = json.load(file)
         file.close()
     os.remove(file_path)
-    if "dataSets" not in data or "sensors" not in data:
+    if "dataSets" not in data:
         raise IndexError()
     if "features" not in data:
         data["features"] = []
@@ -313,6 +313,7 @@ if __name__ == "__main__":
     # as second to last step, train our classifier!
     train_classifier(x_training_processed, y_training, classifier)
     # as last, put everything in the data base and be done.
-    model_id = database.put_stuff(scaler, features, exec_params["dataSets"], exec_params["sensors"], classifier)
+    # TODO: implement label handling!
+    model_id = database.put_stuff(classifier, scaler, database.get_sensors(exec_params["dataSets"]))
     # as very last, say our server hello, so that it sends an email.
     notify_server(model_id)
