@@ -4,6 +4,7 @@ This file contains the data base connection handling class DataBase
 """
 import json
 import pickle
+from typing import Any
 
 import mysql.connector
 import pandas as pd
@@ -87,7 +88,7 @@ class Database:
             result |= row["type"]
         return sorted(result)
 
-    def get_stuff(self, classifier_id: int) -> tuple:
+    def get_stuff(self, classifier_id: int) -> tuple[Any, Any, list[int], dict[int, str]]:
         """
         This method retrieves a classifier and the scaler associated with it from their respecting database tables.
         If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are not
@@ -96,27 +97,19 @@ class Database:
         :param classifier_id: The id of the classifier in its database table.
         :return: A classifier object and a scaler object bundled together in a tuple.
         """
-        query_cls = """SELECT * FROM classifiers WHERE Id = %s"""
-        query_scl = """SELECT * FROM scalers WHERE Id = %s"""
-        data_tuple_cls = classifier_id,
+        query = """SELECT * FROM Classifiers WHERE ID = %s"""
+        data_tuple = classifier_id,
         cursor = self.data_base.cursor(dictionary=True)
-        cursor.execute(query_cls, data_tuple_cls)
+        cursor.execute(query, data_tuple)
         result = cursor.fetchall()
         if cursor.rowcount > 1:
             raise ValueError
         classifier = pickle.loads(result[0]["Classifier"])
-        if "Scaler" in result[0]:
-            data_tuple_scl = result[0]["Scaler"],
-        else:
-            data_tuple_scl = classifier_id,
-        cursor.execute(query_scl, data_tuple_scl)
-        result = cursor.fetchall()
-        if cursor.rowcount > 1:
-            raise ValueError
         scaler = pickle.loads(result[0]["Scaler"])
-        return classifier, scaler
+        sensors, labels_table = json.loads(result[0]["Sensors"]), json.loads(result[0]["LabelsTable"])
+        return classifier, scaler, sensors, labels_table
 
-    def put_stuff(self, classifier, scaler, sensors, labels_table: dict[int, str] = None):
+    def put_stuff(self, classifier, scaler, sensors, labels_table: dict[int, str] = None) -> int:
         """
         This method puts a classifier, a scaler, the label-to-number association table and the list of sensor types
         that were used when collecting the data for the data sets used in the training of the ai model into the
