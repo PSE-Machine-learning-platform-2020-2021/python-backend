@@ -2,10 +2,12 @@
 """
 This file contains the data base connection handling class DataBase
 """
+import json
 import pickle
 
 import mysql.connector
 import pandas as pd
+import numpy as np
 
 from src.config.configReader import ConfigReader
 
@@ -23,22 +25,42 @@ class Database:
         db_data = config.get_values("DB")
         self.data_base = mysql.connector.connect(*db_data)
 
-    def get_data_sets(self, indices: list) -> tuple:
+    def get_data_sets(self, indices: list[int]) -> list[pd.DataFrame]:
         """
         This method retrieves all datasets specified by parameter indices from the database specified in config file.
+        ATTENTION: This method does atm not load and append any labels to the data!
+        TODO: Change that.
         :param indices: A list containing the database indices of all of the desired data sets for further processing.
-        :return: Retrieved datasets or exceptions/errors based on the reason that caused the request to fail.
+        :return: A tuple containing all data rows found and matching one of the passed data set ids, grouped together
+                 by their data set id into pandas Dataframe objects.
         """
         cursor = self.data_base.cursor(dictionary=True)
-        query = """SELECT * FROM dataSets WHERE Id = %s"""
-        output = []
-        for x in indices:
-            data_tuple = x,
-            cursor.execute(query, data_tuple)
-            result = cursor.fetchone()
-            result.update("DataSet", pd.DataFrame(result["DataSet"]))
-            output.append(result)
-        return tuple(output)
+        # With this query we select all data rows belonging to the given data sets together with their name and
+        # the name of the sensor that was used for them.
+        query = """SELECT dataJSON, 
+                          name, 
+                          (SELECT sensorName FROM Sensor WHERE Sensor.sensorID = Datarow.sensorID) AS sensorName,
+                   FROM Datarow
+                   WHERE datasetID = %s"""
+        result = []
+        for i in indices:
+            # execute query for every single dataset
+            cursor.execute(query, i)
+            data_set = {}
+            times = set()
+
+            # Integrate all the data rows found into the dataset
+            for data_row in cursor.fetchall():
+                name = data_row["sensorName"] if data_row["name"] is None else data_row["name"]
+                data_set[name] = {x["relativeTime"]: x["value"] for x in json.loads(data_row["dataJSON"])}
+                times |= set(data_set[name].keys())
+
+            # ensure that all data rows feature exactly equal sets of timestamps and in all cases have values there and
+            # that all values are in correct ascending order by timestamp
+            for key in data_set.keys():
+                data_set[key] = {x: np.NaN for x in sorted(times)} | data_set[key]
+            result.append(pd.DataFrame(data_set))
+        return result
 
     def get_scalers(self, scaler_type: str, features: list, data_set_ids: list) -> tuple:
         """
