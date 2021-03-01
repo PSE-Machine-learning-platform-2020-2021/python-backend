@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import sklearn
 import tsfresh
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
@@ -15,7 +16,7 @@ from sklearn.svm import SVC
 from tsfresh.feature_extraction import ComprehensiveFCParameters
 
 if __name__ == "__main__":
-    data_path = "../../../Entwurf/activity_recognition/activity_recognition/Workshop_Data"
+    data_path = "../../../Entwurf/activity_recognition/Workshop_Data"
     csv_file = "exp01_user01.csv"
 
     label_dict: dict[int, str] = {1: "WALKING", 2: "WALKING_UPSTAIRS", 3: "WALKING_DOWNSTAIRS", 4: "SITTING",
@@ -31,6 +32,9 @@ if __name__ == "__main__":
     for csv in csv_list:
         df = pd.read_csv(os.path.join(data_path, csv))
         labels = np.array(df["label"].fillna(13))
+        first_imputer = sklearn.impute.SimpleImputer()
+        first_imputer.fit(df)
+        df = first_imputer.transform(df)
         # change the label 7 stand for all rest activity
         labels = np.where(labels > 6, 7, labels)
         df["label"] = labels
@@ -42,6 +46,8 @@ if __name__ == "__main__":
             X.append(data_x)
             y.append(data_y)
 
+
+
     # # Data Transformation
 
     # ## "Feature Extraction"
@@ -52,25 +58,29 @@ if __name__ == "__main__":
                           "ar_coefficient", "linear_trend_timewise", "spkt_welch_density"]
     settings = {key: ComprehensiveFCParameters()[key] for key in feature_to_extract}
     results = []
-    for j in range(len(X)):
+    for j in range(10):
         X[j]["id"] = j
         data_feature = tsfresh.extract_features(X[j], column_id="id", default_fc_parameters=settings)
         results.append(data_feature)
 
-    #    temp = (X[0]).copy()
-    #    temp["id"] = 1
-    #    print("Temp Features")
-    #    temp_feature = tsfresh.extract_features(temp, column_id="id", default_fc_parameters=settings, disable_progressbar=True)
+    # temp = (X[0]).copy()
+    # temp["id"] = 1
+    # temp_ft = tsfresh.extract_features(temp, column_id="id", default_fc_parameters=settings, disable_progressbar=True)
 
     # To save time, the features have been extracted.
     # Parallel computing?
-    #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
+#    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
+    all_features = pd.concat(results)
+    second_imputer = sklearn.impute.SimpleImputer(missing_values=np.NaN)
+    second_imputer.fit(all_features)
+    all_features = second_imputer.transform(all_features)
+    all_features["label"] = y[:10]
     # ## Train Test Split
-    train_x = results.iloc[:int(results.shape[0] * 0.8), :-1]
-    train_y = results.iloc[:int(results.shape[0] * 0.8), -1]
-    test_x = results.iloc[int(results.shape[0] * 0.8):, :-1]
-    test_y = results.iloc[int(results.shape[0] * 0.8):, -1]
+    train_x = all_features.iloc[:int(all_features.shape[0] * 0.8), :-1]
+    train_y = all_features.iloc[:int(all_features.shape[0] * 0.8), -1]
+    test_x = all_features.iloc[int(all_features.shape[0] * 0.8):, :-1]
+    test_y = all_features.iloc[int(all_features.shape[0] * 0.8):, -1]
 
     # ## Normalization
 
