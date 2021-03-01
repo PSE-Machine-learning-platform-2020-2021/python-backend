@@ -9,6 +9,7 @@ import pandas as pd
 import sklearn
 import tsfresh
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import RobustScaler
@@ -32,9 +33,9 @@ if __name__ == "__main__":
     for csv in csv_list:
         df = pd.read_csv(os.path.join(data_path, csv))
         labels = np.array(df["label"].fillna(13))
-        first_imputer = sklearn.impute.SimpleImputer()
+        first_imputer = SimpleImputer()
         first_imputer.fit(df)
-        df = first_imputer.transform(df)
+        df = pd.DataFrame(first_imputer.transform(df), columns=df.columns, index=df.index)
         # change the label 7 stand for all rest activity
         labels = np.where(labels > 6, 7, labels)
         df["label"] = labels
@@ -58,7 +59,7 @@ if __name__ == "__main__":
                           "ar_coefficient", "linear_trend_timewise", "spkt_welch_density"]
     settings = {key: ComprehensiveFCParameters()[key] for key in feature_to_extract}
     results = []
-    for j in range(10):
+    for j in range(len(X)):
         X[j]["id"] = j
         data_feature = tsfresh.extract_features(X[j], column_id="id", default_fc_parameters=settings)
         results.append(data_feature)
@@ -72,10 +73,10 @@ if __name__ == "__main__":
 #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
     all_features = pd.concat(results)
-    second_imputer = sklearn.impute.SimpleImputer(missing_values=np.NaN)
+    second_imputer = SimpleImputer(missing_values=np.NaN)
     second_imputer.fit(all_features)
     all_features = second_imputer.transform(all_features)
-    all_features["label"] = y[:10]
+    all_features["label"] = y
     # ## Train Test Split
     train_x = all_features.iloc[:int(all_features.shape[0] * 0.8), :-1]
     train_y = all_features.iloc[:int(all_features.shape[0] * 0.8), -1]
