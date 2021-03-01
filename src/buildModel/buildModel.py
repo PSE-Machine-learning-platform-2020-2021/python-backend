@@ -7,10 +7,12 @@ import sys
 from typing import Union
 
 import numpy as np
+import pandas
 import tsfresh
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import Normalizer, MinMaxScaler, QuantileTransformer, RobustScaler, StandardScaler
@@ -32,10 +34,7 @@ def fetch_parameters() -> dict:
     The json file needs to contain the following data in exact the described format in order to be usable:
 
     {
-        "sensors": [
-            "sensor name#i"
-
-        ],
+        "imputator": "<ImputatorType>",
 
         "dataSets": [
             1,
@@ -119,7 +118,7 @@ def choose_features(features_from_outside: list[str]) -> list[str]:
         'AUTOREGRESSIVE': "ar_coefficient",
         'IQR': "quantile",
         'SKEWNESS': "skewness",
-        'KURTOSIS': "kurtosis",
+        'KURTOSIS': "kurtosis"
     }
     if len(features_from_outside) == 0:
         return [features_available[x] for x in features_available]
@@ -142,8 +141,7 @@ def choose_scaler(name: str):
     }
     if name in options:
         return options[name]
-    else:
-        return StandardScaler()
+    return StandardScaler()
 
 
 def choose_classifier(name: str):
@@ -161,20 +159,56 @@ def choose_classifier(name: str):
     }
     if name in options:
         return options[name]
-    else:
-        return DummyClassifier()
+    return DummyClassifier()
 
 
-def create_time_slices(data: list[DataFrame], chunk_size=128, step=64) -> tuple[list[DataFrame], list[DataFrame]]:
+def choose_imputator(name: str) -> tuple:
+    """
+    Yes, I know, it should be named 'imputer' but well ... I don't care - 'Imputator' sounds like 'Terminator' and
+    because of this it is fine. Ok. To the method:
+
+    This method acts as a switch over the Imputation enum type from the TypeScript front end and creates out of a
+    constant of this enum an imputator object from sklearn and returns it.
+
+    :param name: The name of the imputator type as of Imputation enum in TypeScript
+    :return: Two imputator objects from sklearn.impute corresponding to the passed name. There are two as we need two.
+             Believe me.
+    """
+    options = {
+        "MEAN": SimpleImputer()
+    }
+    if name in options:
+        return options[name], options[name]
+    return SimpleImputer(), SimpleImputer()
+
+
+def impute(data: DataFrame, imputator: Union[SimpleImputer]) -> DataFrame:
+    """
+    Executes Imputation over a data frame
+
+    :param data: The data frame object on which imputation is to be performed
+    :param imputator: an object doing this as one does it with sklearn.impute imputers.
+    :return: the same data frame just with imputed values.
+    """
+    data.replace([np.inf, -np.inf], np.NaN)
+    if data.isna().values.any():
+        imputator.fit(data)
+        return DataFrame(imputator.transform(data), columns=data.columns, index=data.index)
+    return data
+
+
+def create_time_slices(data: list[DataFrame], imputer: Union[imputer], chunk_size=128, step=64)\
+        -> tuple[list[DataFrame], list[int]]:
     """
     This method cuts timeline based data sets into slices specified by passed parameters.
 
-    :param step: How many data points should lie between the beginning of two consecutive chunks?
-                 Must lie between 1 and chunk_size inclusively
+    :param step:    How many data points should lie between the beginning of two consecutive chunks?
+                    Must lie between 1 and chunk_size inclusively
     :param chunk_size: How many data points a chunk should contain?
-                 Must be larger than zero.
-    :param data: A list of pandas DataFrame objects containing timeline based data to be transformed.
-                 Those Dataframe objects must contain a column 'label' as last column.
+                    Must be larger than zero.
+    :param data:    A list of pandas DataFrame objects containing timeline based data to be transformed.
+                    Those Dataframe objects must contain a column 'label' as last column.
+    :param imputer: An object from sklearn.impute or anything performing similar, used to impute numbers on bad values.
     :returns: Training data and after that the corresponding labels.
     """
     if chunk_size < 1:
@@ -186,9 +220,11 @@ def create_time_slices(data: list[DataFrame], chunk_size=128, step=64) -> tuple[
     if any([d.columns[-1] != "label" for d in data]):
         raise ValueError('At least one data set does not contain a column labelled "label" as last column.')
     x: list[DataFrame] = []
-    y: list[DataFrame] = []
+    y: list[int] = []
     for df in data:
-        df["label"] = np.array(df["label"].fillna(-1))
+        labels = np.array(df["label"].fillna(-1))
+        df = impute(df, imputer)
+        df["label"] = labels
         local_cs = chunk_size
         local_step = step
         if local_cs > df.shape[0]:
@@ -197,20 +233,25 @@ def create_time_slices(data: list[DataFrame], chunk_size=128, step=64) -> tuple[
             local_step = local_cs
         for i in range(0, df.shape[0] - local_cs + 1, local_step):
             data_x: DataFrame = df.iloc[i:i + local_cs, :-1]
-            data_y: DataFrame = df.iloc[i:i + local_cs, -1].value_counts().index[0]
+            data_y: int = df.iloc[i:i + local_cs, -1].value_counts().index[0]
             x.append(data_x)
             y.append(data_y)
     return x, y
 
 
-def extract_features(ft_list: list[str], data: list[DataFrame]) -> list[DataFrame]:
+def extract_features(ft_list: list[str], data: list[DataFrame], label: list[int], imputer: Union[SimpleImputer]) -> DataFrame:
     """
     This method performs the step of feature extraction on a list of DataFrames from pandas.
 
     :param ft_list: a list of features generated by method 'choose_features'
-    :param data: The data sets on which the feature extraction is to be performed.
-    :return: A list containing all the data with extracted features on them.
+    :param data:    The data sets on which the feature extraction is to be performed.
+    :param label:   The labels column belonging to the data passed. It is expected to have the same length as data
+    :param imputer: An object from sklearn.impute or anything that does the job the same way for imputing numbers that
+                    have been corrupted in feature extraction.
+    :return:        A list containing all the data with extracted features on them.
     """
+    if len(data) != len(label):
+        raise ValueError("Input data does not contain same amount of entries as labels.")
     settings = {key: ComprehensiveFCParameters()[key] for key in ft_list}
     results: list[DataFrame] = []
     for i, x in enumerate(data):
@@ -218,28 +259,25 @@ def extract_features(ft_list: list[str], data: list[DataFrame]) -> list[DataFram
         block["id"] = i + 1
         results.append(tsfresh.extract_features(block, column_id="id", default_fc_parameters=settings,
                                                 disable_progressbar=True))
-    return results
+    output: DataFrame = impute(pandas.concat(results), imputer)
+    output["label"] = label
+    return output
 
 
-def partition_data(x_data: list[DataFrame], y_data: list[DataFrame], percentage=0.8) -> tuple[list[DataFrame],
-                                                                                              list[DataFrame],
-                                                                                              list[DataFrame],
-                                                                                              list[DataFrame]]:
+def partition_data(data: DataFrame, percentage=0.8) -> tuple[DataFrame, Series, DataFrame, Series]:
     """
     This method breaks up the passed data into a part of paired X/Y-axis training data and a part of X/Y-axis labeled
     testing data.
 
-    :param x_data: The data to split up
-    :param y_data: The data labels corresponding to x_data. Has to have the same length as x_data
+    :param data: The data to split up
     :param percentage: The percentage of the input data to be used as training data.
     :returns: Four chunks of data: X-axis training, Y-axis training, X-axis testing, Y-axis testing
     """
-    if len(x_data) != len(y_data):
-        raise ValueError("Input data for x and y axis do not have same length.")
-    train_x = x_data[:int(len(x_data) * percentage)]
-    train_y = y_data[:int(len(y_data) * percentage)]
-    test_x = x_data[int(len(x_data) * percentage):]
-    test_y = y_data[int(len(y_data) * percentage):]
+
+    train_x = data.iloc[:int(len(x_data) * percentage), :-1]
+    train_y = data.iloc[:int(len(y_data) * percentage), -1]
+    test_x = data.iloc[int(len(x_data) * percentage):, :-1]
+    test_y = data.iloc[int(len(y_data) * percentage):, -1]
     return train_x, train_y, test_x, test_y
 
 
@@ -259,7 +297,7 @@ def preprocess_data(data: DataFrame,
     return scaler.transform(data)
 
 
-def train_classifier(x_axis_data: DataFrame, y_axis_data: DataFrame,
+def train_classifier(x_axis_data: DataFrame, y_axis_data: Series,
                      classifier: Union[MLPClassifier, RandomForestClassifier, KNeighborsClassifier, SVC]) -> None:
     """
     This method performs training on the classifier.
@@ -290,23 +328,23 @@ if __name__ == "__main__":
     features = choose_features(exec_params["features"])
     scaler = choose_scaler(exec_params["scaler"])
     classifier = choose_classifier(exec_params["classifier"])
+    imputators = choose_imputator(exec_params["imputator"])
     # Get Access to our data base
     database = Database()
     # Get the data sets we need from the database
     datasets = database.get_data_sets(exec_params["dataSets"])
     # Prepare the data
-    x_data, y_data = create_time_slices(datasets, *{x: exec_params[x]
-                                                    for x in ("slidingWindowSize", "slidingWindowStep")
-                                                    if x in exec_params})
+    x_data, y_data = create_time_slices(datasets, imputators[0], *{x: exec_params[x]
+                                                                   for x in ("slidingWindowSize", "slidingWindowStep")
+                                                                   if x in exec_params})
     # Extract all the features desired.
-    featured_data = extract_features(features, x_data)
-
+    featured_data = extract_features(features, x_data, y_data, imputators[1])
     # After that, part our data into one part of training and one part of testing data.
     if "trainingDataPercentage" in exec_params:
-        x_training, y_training, x_testing, y_testing = partition_data(featured_data, y_data,
+        x_training, y_training, x_testing, y_testing = partition_data(featured_data,
                                                                       exec_params["trainingDataPercentage"])
     else:
-        x_training, y_training, x_testing, y_testing = partition_data(featured_data, y_data)
+        x_training, y_training, x_testing, y_testing = partition_data(featured_data)
     # Now preprocess our data through our scaler
     x_training_processed = preprocess_data(x_training, scaler)
     x_testing_processed = preprocess_data(x_testing, scaler, True)
