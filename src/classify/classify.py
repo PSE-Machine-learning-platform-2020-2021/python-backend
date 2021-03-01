@@ -59,8 +59,8 @@ if __name__ == "__main__":
     # first of all - get our execution parameters!
     exec_params = fetch_parameters()
     data_sets = database.get_data_sets(exec_params["dataSets"])
-    classifier, scaler = database.get_stuff(exec_params["classifier"])
+    classifier, scaler, sensors, labels = database.get_stuff(exec_params["classifier"])
     scaled_data = scaler.transform(data_sets)
     prediction = classifier.predict(scaled_data)
     for x in prediction:
-        print(x)
+        print(labels[x])
