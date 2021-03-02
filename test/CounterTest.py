@@ -6,7 +6,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import sklearn
 import tsfresh
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
@@ -46,8 +45,6 @@ if __name__ == "__main__":
             # .index[0] just takes that label which occurs most often.
             X.append(data_x)
             y.append(data_y)
-
-
 
     # # Data Transformation
 
