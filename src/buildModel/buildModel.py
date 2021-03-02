@@ -197,7 +197,7 @@ def impute(data: DataFrame, imputator: Union[SimpleImputer]) -> DataFrame:
     return data
 
 
-def create_time_slices(data: list[DataFrame], imputer: Union[imputer], chunk_size=128, step=64)\
+def create_time_slices(data: list[DataFrame], imputer: Union[SimpleImputer], chunk_size=128, step=64)\
         -> tuple[list[DataFrame], list[int]]:
     """
     This method cuts timeline based data sets into slices specified by passed parameters.
@@ -239,7 +239,8 @@ def create_time_slices(data: list[DataFrame], imputer: Union[imputer], chunk_siz
     return x, y
 
 
-def extract_features(ft_list: list[str], data: list[DataFrame], label: list[int], imputer: Union[SimpleImputer]) -> DataFrame:
+def extract_features(ft_list: list[str], data: list[DataFrame], label: list[int], imputer: Union[SimpleImputer])\
+        -> DataFrame:
     """
     This method performs the step of feature extraction on a list of DataFrames from pandas.
 
@@ -330,9 +331,9 @@ if __name__ == "__main__":
     classifier = choose_classifier(exec_params["classifier"])
     imputators = choose_imputator(exec_params["imputator"])
     # Get Access to our data base
-    database = Database()
+    database = Database(exec_params["dataSets"])
     # Get the data sets we need from the database
-    datasets = database.get_data_sets(exec_params["dataSets"])
+    datasets = database.get_data_sets()
     # Prepare the data
     x_data, y_data = create_time_slices(datasets, imputators[0], *{x: exec_params[x]
                                                                    for x in ("slidingWindowSize", "slidingWindowStep")
@@ -351,7 +352,6 @@ if __name__ == "__main__":
     # as second to last step, train our classifier!
     train_classifier(x_training_processed, y_training, classifier)
     # as last, put everything in the data base and be done.
-    # TODO: implement label handling!
-    model_id = database.put_stuff(classifier, scaler, database.get_sensors(exec_params["dataSets"]))
+    model_id = database.put_stuff(classifier, scaler)
     # as very last, say our server hello, so that it sends an email.
     notify_server(model_id)
