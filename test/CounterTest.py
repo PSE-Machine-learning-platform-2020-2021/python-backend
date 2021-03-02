@@ -73,6 +73,7 @@ if __name__ == "__main__":
 #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
     all_features = pd.concat(results)
+    all_features.replace([np.inf, -np.inf], np.NaN)
     second_imputer = SimpleImputer(missing_values=np.NaN)
     second_imputer.fit(all_features)
     all_features = second_imputer.transform(all_features)
