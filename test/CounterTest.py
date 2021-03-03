@@ -3,6 +3,7 @@
 Yexu's workshop copied for learning reasons.
 """
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -51,26 +52,29 @@ if __name__ == "__main__":
     # ## "Feature Extraction"
 
     # Select the features to be extracted.
-    feature_to_extract = ["mean", "variance", "skewness", "kurtosis", "maximum", "minimum",
-                          "longest_strike_below_mean", "longest_strike_above_mean", "sample_entropy",
-                          "ar_coefficient", "linear_trend_timewise", "spkt_welch_density"]
-    settings = {key: ComprehensiveFCParameters()[key] for key in feature_to_extract}
-    results = []
-    for j in range(len(X)):
-        X[j]["id"] = j
-        data_feature = tsfresh.extract_features(X[j], column_id="id", default_fc_parameters=settings)
-        results.append(data_feature)
+    try:
+        # in this case we already extracted the features once and could store them in a file.
+        with open("temp", "rb") as file:
+            all_features = pickle.load(file)
+    except OSError:
+        # in this case we still have to do this.
+        feature_to_extract = ["mean", "variance", "skewness", "kurtosis", "maximum", "minimum",
+                              "longest_strike_below_mean", "longest_strike_above_mean", "sample_entropy",
+                              "ar_coefficient", "linear_trend_timewise", "spkt_welch_density"]
+        settings = {key: ComprehensiveFCParameters()[key] for key in feature_to_extract}
+        results = []
+        for j in range(len(X)):
+            X[j]["id"] = j
+            data_feature = tsfresh.extract_features(X[j], column_id="id", default_fc_parameters=settings)
+            results.append(data_feature)
 
-    # temp = (X[0]).copy()
-    # temp["id"] = 1
-    # temp_ft = tsfresh.extract_features(temp, column_id="id", default_fc_parameters=settings, disable_progressbar=True)
+        #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
-    # To save time, the features have been extracted.
-    # Parallel computing?
-#    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
+        all_features = pd.concat(results)
+        all_features.replace([np.inf, -np.inf], np.NaN)
+        with open("temp", "wb") as file:
+            pickle.dump(all_features, file)
 
-    all_features = pd.concat(results)
-    all_features.replace([np.inf, -np.inf], np.NaN)
     second_imputer = SimpleImputer(missing_values=np.NaN)
     second_imputer.fit(all_features)
     all_features = second_imputer.transform(all_features)
