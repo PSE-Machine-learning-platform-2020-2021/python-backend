@@ -1,6 +1,6 @@
 <?php
 class DataBaseConnection extends PDO {
-    public $last_statement;
+    private $last_statement;
     /**
      * Creates a database connection
      * @param $file - a json file containing the following JSON data:
@@ -454,6 +454,22 @@ class DataBaseConnection extends PDO {
 		# Print out result.
 		header("Content-Type: application/json");
         echo '{"result": ' . $result . '}';
+	}
+	
+	/**
+	 * This method retrieves an email address by user id from the admins database table and returns it - in opposite to all other methods, that simply print their result.
+	 *
+	 * @param $uid - the numeric user id of of whom the email address is to be retrieved.
+	 * @return the corresponding email address together with the name, each located under 'email', resp. 'name'
+	 */
+	public function get_email($uid) {
+		$sql = "SELECT name, eMail AS email FROM User, Admin WHERE Admin.userID = {$uid} AND User.UserID = {$uid}";
+		$this->get_data($sql);
+		$result = $this->last_statement->fetchAll();
+		if(count($result) !== 1) {
+			throw new UnexpectedValueException("Illegal number of records - database is corrupted!");
+		}
+		return $result[0];
 	}
 }
 ?>
