@@ -8,7 +8,7 @@ $result = json_decode(file_get_contents("php://input"), true);
 
 # Ensure that we have all data required:
 if(!is_array($result) 
-   OR !isset($result["dataSets"], $result["sensors"], $result["features"], $result["scaler"], $result["classifier"]) 
+   OR !isset($result["dataSets"], $result["features"], $result["scaler"], $result["classifier"], $result["imputator"]) 
    OR !is_array($result["dataSets"]) 
    OR !is_array($result["sensors"])
    OR !is_array($result["features"])
