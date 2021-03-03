@@ -392,9 +392,10 @@ class DataBaseConnection extends PDO {
 				break;
 			}
 		}
-		
-		session_start();
-		$_SESSION["logged_in"] = $result["admin"]["adminID"];
+		if (isset($result["admin"])) {
+			@session_start();
+			$_SESSION["logged_in"] = $result["admin"]["adminID"];
+		}
 		
 		# Print out result.
 		header("Content-Type: application/json");
