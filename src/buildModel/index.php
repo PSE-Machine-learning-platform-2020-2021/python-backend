@@ -35,9 +35,27 @@ if($lock) {
 	flock($file, LOCK_UN);
 }
 fclose($file);
-$output = exec("python 3.9 classify.py " . $fn);
-# TODO build that damn email!!!
-# mail();
-# E-Mail kommt über 
-$sql = "SELECT eMail FROM Admin WHERE userID = {$_SESSION["logged_in"]}";
+$output = exec("python 3.9 buildModel.py " . $fn);
+
+# Get E-mail address
+require("../database/dataBaseConnection.php");
+$db = new DatabaseConnection();
+$address = $db->get_email($_SESSION["logged_in"]);
+
+# Set up Mailer and Mail server (maybe I should encapsulate this some day into a function).
+require('PHPMailer-5.2-stable/PHPMailerAutoload.php');
+$mailer = new PHPMailer();
+$mailer->CharSet = "UTF-8";
+$mailer->isSMTP();
+$mailer->Host = "mail.teco.edu";
+
+# Send email.
+$mailer->From = "no-reply@pse-w2020-t2.dmz.teco.edu";
+$mailer->FromName = "KI-App";
+$mailer->AddAddress($address["email"], $address["name"]);
+
+$mailer->isHTML();
+$mailer->Subject = "Ihr KI-Modell ist fertig"; # Needs Inlcusion of the corresponding Texts!
+$mailer->Body = "<p>Bitte folgen Sie diesem Link, um ihr KI-Modell auszuliefern: <a href=\"https://129.13.170.59/build?deliverModel=true&modelID={$output}\">Auslieferungsseite</a>.</p><p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+$mailer->Send();
 ?>
