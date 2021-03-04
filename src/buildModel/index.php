@@ -10,7 +10,6 @@ $result = json_decode(file_get_contents("php://input"), true);
 if(!is_array($result) 
    OR !isset($result["dataSets"], $result["features"], $result["scaler"], $result["classifier"], $result["imputator"]) 
    OR !is_array($result["dataSets"]) 
-   OR !is_array($result["sensors"])
    OR !is_array($result["features"])
    OR $_SERVER["REQUEST_METHOD"] !== "POST"
    ) {
@@ -38,7 +37,7 @@ fclose($file);
 $output = exec("python 3.9 buildModel.py " . $fn);
 
 # Get E-mail address
-require("../database/dataBaseConnection.php");
+require("../database/databaseConnection.php");
 $db = new DatabaseConnection();
 $address = $db->get_email($_SESSION["logged_in"]);
 
