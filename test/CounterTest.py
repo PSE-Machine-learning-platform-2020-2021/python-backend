@@ -71,14 +71,15 @@ if __name__ == "__main__":
         #    all_features = pd.read_csv(os.path.join(data_path, "all_feature.csv"))
 
         all_features = pd.concat(results)
-        all_features.replace([np.inf, -np.inf], np.NaN)
+        all_features = all_features.replace([np.inf, -np.inf], np.NaN)
         with open("temp", "wb") as file:
             pickle.dump(all_features, file)
 
+    all_features = all_features.replace([np.inf, -np.inf], np.NaN)
     second_imputer = SimpleImputer(missing_values=np.NaN)
     second_imputer.fit(all_features)
-    all_features = second_imputer.transform(all_features)
-    all_features["label"] = y
+    all_features = pd.DataFrame(second_imputer.transform(all_features), columns=all_features.columns, index=all_features.index)
+    all_features["label"] = pd.DataFrame(y)
     # ## Train Test Split
     train_x = all_features.iloc[:int(all_features.shape[0] * 0.8), :-1]
     train_y = all_features.iloc[:int(all_features.shape[0] * 0.8), -1]
