@@ -282,7 +282,7 @@ class DataBaseConnection extends PDO {
 		
 		$result["device"] = $this->register_device($params["device"], $result["adminID"]);
 		
-		session_start();
+		@session_start();
 		$_SESSION["loogged_in"] = $result["adminID"];
 				
 		# Print out result.
