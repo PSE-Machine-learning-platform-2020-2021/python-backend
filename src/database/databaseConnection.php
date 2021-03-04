@@ -13,7 +13,7 @@ class DataBaseConnection extends PDO {
      *                Whereof db is the name of the database to connect to.
      *
     */
-    public function __construct($file = "config.json") {
+    public function __construct($file = __DIR__."/config.json") {
         $connection_data = json_decode(file_get_contents($file), true);
         if(!isset($connection_data["host"], $connection_data["db"]) and !isset($connection_data["dns"])) {
             throw new InvalidArgumentException("Config file invalid!");
