@@ -392,7 +392,7 @@ class DataBaseConnection extends PDO {
 				break;
 			}
 		}
-		if (isset($result["admin"]) AND is_array($result["admin"])) {
+		if (isset($result["admin"]) AND (is_iterable($result["admin"]) OR is_countable($result["admin"]))) {
 			@session_start();
 			$_SESSION["logged_in"] = $result["admin"]["adminID"];
 		}
