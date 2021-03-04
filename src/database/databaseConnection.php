@@ -386,7 +386,7 @@ class DataBaseConnection extends PDO {
 		
 		foreach($this->last_statement->fetchAll() as $row) {
 			if(password_verify($params["password"], $row["password"])) {
-				$sql = "SELECT User.userID AS adminID, eMail AS email, User.name AS adminName, deviceID FROM Admin, User, Device WHERE User.userID = {$row["userID"]} AND Admin.userID = {$row["userID"]} AND Device.userID = {$row["userID"]} ;";
+				$sql = "SELECT User.userID AS adminID, eMail AS email, User.name AS adminName, deviceID FROM Admin, User, Device WHERE User.userID = {$row["userID"]} AND Admin.userID = {$row["userID"]} AND Device.userID = {$row["userID"]};";
 				$this->get_data($sql);
 				$result["admin"] = $this->last_statement->fetch();
 				break;
