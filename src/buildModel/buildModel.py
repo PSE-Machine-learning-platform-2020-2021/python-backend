@@ -190,7 +190,7 @@ def impute(data: DataFrame, imputator: Union[SimpleImputer]) -> DataFrame:
     :param imputator: an object doing this as one does it with sklearn.impute imputers.
     :return: the same data frame just with imputed values.
     """
-    data.replace([np.inf, -np.inf], np.NaN)
+    data = data.replace([np.inf, -np.inf], np.NaN)
     if data.isna().values.any():
         imputator.fit(data)
         return DataFrame(imputator.transform(data), columns=data.columns, index=data.index)
