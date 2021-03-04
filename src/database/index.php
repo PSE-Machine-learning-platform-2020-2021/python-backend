@@ -40,6 +40,10 @@ switch($_GET["action"]) {
 	case "create_label":
 	case "set_label":
 	case "delete_label":
+		if(count($_POST) === 0) {
+			http_response_code(406);
+			throw new BadMethodCallException("No parameters passed. This is illegal. Intelligence Agency is informed.");
+		}
 		eval("\$db->${_GET["action"]}(\$_POST);");
 		break;
 	default:
