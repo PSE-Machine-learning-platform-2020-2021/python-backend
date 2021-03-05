@@ -20,7 +20,7 @@ if($lock) {
 }
 fclose($file);
 $output = [];
-exec("python 3.9 classify.py " . $fn, $output);
+exec("python 3.9 classify.py " . $fn . " 2>&1", $output);
 header("Content-Type: application/json");
 echo json_encode($output, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 ?>
