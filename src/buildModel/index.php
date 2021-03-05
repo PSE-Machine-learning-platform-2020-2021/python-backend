@@ -59,7 +59,7 @@ if ($code === 0) {
 }
 else {
 	$mailer->Subject = "Fehler in Modell-Erstellung";
-	$mailer->Body = "<p>Bei der Erstellung Ihres KI-Modells ist ein Fehler aufgetreten. Der Bau der Anwendung konnte nicht erfolgreich abgeschlossen werden.<br />Bitte wenden Sie sich an Ihren Administrator.</p></p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+	$mailer->Body = "<p>Bei der Erstellung Ihres KI-Modells ist ein Fehler aufgetreten. Der Bau der Anwendung konnte nicht erfolgreich abgeschlossen werden.<br />Bitte wenden Sie sich an Ihren Administrator und übermitteln Sie ihm folgende Daten:<br /><pre>" . implode("\r\n", $_) . "</pre></p></p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
 }
 $mailer->Send();
 ?>
