@@ -34,7 +34,7 @@ if($lock) {
 	flock($file, LOCK_UN);
 }
 fclose($file);
-$output = exec("python 3.9 buildModel.py " . $fn);
+$output = exec("python3.9 buildModel.py " . $fn . " 2>&1", $_, $code);
 
 # Get E-mail address
 require("../database/databaseConnection.php");
@@ -52,9 +52,14 @@ $mailer->Host = "mail.teco.edu";
 $mailer->From = "no-reply@pse-w2020-t2.dmz.teco.edu";
 $mailer->FromName = "KI-App";
 $mailer->AddAddress($address["email"], $address["name"]);
-
 $mailer->isHTML();
-$mailer->Subject = "Ihr KI-Modell ist fertig"; # Needs Inlcusion of the corresponding Texts!
-$mailer->Body = "<p>Bitte folgen Sie diesem Link, um ihr KI-Modell auszuliefern: <a href=\"https://129.13.170.59/build?deliverModel=true&modelID={$output}\">Auslieferungsseite</a>.</p><p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+if ($code === 0) {
+	$mailer->Subject = "Ihr KI-Modell ist fertig"; # Needs Inlcusion of the corresponding Texts!
+	$mailer->Body = "<p>Bitte folgen Sie diesem Link, um ihr KI-Modell auszuliefern: <a href=\"https://129.13.170.59/build?deliverModel=true&modelID={$output}\">Auslieferungsseite</a>.</p><p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+}
+else {
+	$mailer->Subject = "Fehler in Modell-Erstellung";
+	$mailer->Body = "<p>Bei der Erstellung Ihres KI-Modells ist ein Fehler aufgetreten. Der Bau der Anwendung konnte nicht erfolgreich abgeschlossen werden.<br />Bitte wenden Sie sich an Ihren Administrator.</p></p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+}
 $mailer->Send();
 ?>
