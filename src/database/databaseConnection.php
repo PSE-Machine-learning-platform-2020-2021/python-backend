@@ -333,6 +333,7 @@ class DataBaseConnection extends PDO {
 	 * @return the device id and the global sensor ids
 	 */
 	private function register_device($params, $user_id) {
+		/* This only lowers the usability - thus it is no longer in service.
 		$sql = "SELECT deviceID, userID FROM Device WHERE MACADDRESS = '{$params["MACADRESS"]}'";
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $row) {
@@ -348,7 +349,7 @@ class DataBaseConnection extends PDO {
 			}
 			return array("deviceID" => -1, "sensorID" => array(-1));
 		}
-		
+		*/
 		# Create Device entry.		
 		$sql = "INSERT INTO Device (firmware, generation, MACADDRESS, name, type, userID) VALUES (?, ?, ?, ?, ?, ?)";
 		$this->last_statement = $this->prepare($sql);
