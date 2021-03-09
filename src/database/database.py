@@ -44,6 +44,8 @@ class Database:
 
         It loads those data sets only once from the data base to save time, so you have to empty the data_sets field if
         you wish to refresh the result.
+        
+        Currently uses SensorID as SensorTypeID as sensor name for the purpose of labelling the columns.
 
         :return: A tuple containing all data rows found and matching one of the passed data set ids, grouped together
                  by their data set id into pandas Dataframe objects.
@@ -56,7 +58,7 @@ class Database:
         # the name of the sensor that was used for them.
         query = """SELECT dataJSON, 
                           name, 
-                          (SELECT sensorName FROM Sensor WHERE Sensor.sensorID = Datarow.sensorID) AS sensorName
+                          sensorID AS sensorName
                    FROM Datarow
                    WHERE datasetID = %s"""
         for i in self.data_set_ids:
