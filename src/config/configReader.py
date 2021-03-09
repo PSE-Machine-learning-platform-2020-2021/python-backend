@@ -22,20 +22,26 @@ class ConfigReader:
         else:
             self.config.read(alternate_config_file)
 
-    def get_value(self, section: str, key: str):
+    def get_value(self, section: str, key: str) -> str:
         """
+        Returns the value corresponding to key from section if present, else None.
 
-        :param section:
-        :param key:
-        :return:
+        If the section does not exist, an Error is raised.
+
+        :param section: The section to search in for key.
+        :param key: The key, behind which is the desired value.
+        :return: If section exists the desired value, if key also exists, None else.
+                 If section does not exist, raises Error.
         """
         return self.config.get(section, key, fallback=None)
 
-    def get_values(self, section):
+    def get_values(self, section) -> dict[str, str]:
         """
+        Returns all values associated with their keys which are in section.
 
-        :param section:
-        :return:
+        Raises an Error if section does not exist
+        :param section: The desired section
+        :return: A dict containing key-value pairs as the config file does or an error, if the section does not exist.
         """
         section = self.config.items(section)
         return dict(section)
