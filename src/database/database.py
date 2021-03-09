@@ -2,6 +2,10 @@
 """
 This file contains the data base connection handling class DataBase
 """
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 import json
 import pickle
 from typing import Any

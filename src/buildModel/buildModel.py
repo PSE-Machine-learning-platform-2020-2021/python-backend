@@ -1,10 +1,13 @@
 # coding=utf-8
 """This file describes sort of a function for the TypeScript front end. It executes all necessary steps to build and
 train an AI model. """
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 import json
 import os
-import sys
-sys.path.append("/var/www/ki-app/src")
+
 from typing import Union
 
 import numpy as np
