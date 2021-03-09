@@ -155,7 +155,7 @@ class DataBaseConnection extends PDO {
 		$data = json_encode($data, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 		
 		#  Update table
-		$sql = "UPDATE Datarow SET dataJSON = {$data} WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
+		$sql = "UPDATE Datarow SET dataJSON = '{$data}' WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->execute();
 		header("Content-Type: application/json");
