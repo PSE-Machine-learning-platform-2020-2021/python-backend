@@ -30,8 +30,7 @@ class ConfigReader:
 
         :param section: The section to search in for key.
         :param key: The key, behind which is the desired value.
-        :return: If section exists the desired value, if key also exists, None else.
-                 If section does not exist, raises Error.
+        :return: If section and key exist, the desired value is returned, else None.
         """
         return self.config.get(section, key, fallback=None)
 
