@@ -141,10 +141,11 @@ class DataBaseConnection extends PDO {
 		
 		# Print out result
 		header("Content-Type: application/json");
-		echo '{' . $result . '}';
+		echo '{"result": ' . $result . '}';
 	}
 	
 	public function send_data_point($params) {
+		echo $params["dataRowID"];
 		# Get data to update
 		$sql = "SELECT dataJSON FROM Datarow WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->get_data($sql);
