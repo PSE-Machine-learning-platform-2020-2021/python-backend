@@ -3,4 +3,4 @@
 temp.txt
 src/database/config.json
 *.txt
-*/__pycache__
+__pycache__
