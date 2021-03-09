@@ -4,6 +4,7 @@ train an AI model. """
 import json
 import os
 import sys
+sys.path.append("/var/www/ki-app/src")
 from typing import Union
 
 import numpy as np
@@ -19,7 +20,7 @@ from sklearn.preprocessing import Normalizer, MinMaxScaler, QuantileTransformer,
 from sklearn.svm import SVC
 from tsfresh.feature_extraction import ComprehensiveFCParameters
 
-from src.database.database import Database
+from database.database import Database
 
 
 class IllegalArgumentError(OSError):

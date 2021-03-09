@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
-from src.config.configReader import ConfigReader
+from config.configReader import ConfigReader
 
 
 class Database:
@@ -30,7 +30,7 @@ class Database:
         self.data_set_ids = data_set_ids
         config = ConfigReader()
         db_data = config.get_values("DB")
-        self.data_base = mysql.connector.connect(*db_data)
+        self.data_base = mysql.connector.connect(**db_data)
         self.data_sets: list[DataFrame] = []
         self.sensor_type_ids: list[int] = []
 
@@ -57,7 +57,7 @@ class Database:
                    WHERE datasetID = %s"""
         for i in self.data_set_ids:
             # Execute query for every single dataset
-            cursor.execute(query, i)
+            cursor.execute(query, (i, ))
             data_set: dict[str, dict] = {}
             times = set()
 
@@ -169,9 +169,9 @@ class Database:
         """
         if len(self._labels) > 0:
             return
-        query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN %s"""
+        query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN (%s)"""
         cursor = self.data_base.cursor(dictionary=True)
-        cursor.execute(query, tuple(self.data_set_ids))
+        cursor.execute(query, (str(tuple(self.data_set_ids)),))
         label_names: set[str] = set()
         result = cursor.fetchall()
         if len(result) == 0:
