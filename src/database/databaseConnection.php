@@ -134,8 +134,8 @@ class DataBaseConnection extends PDO {
 		}
 		$this->last_statement = $this->prepare($sql);
 		for($i = 1; $i < count($values) - 1; $i += 2) {
-			$this->last_statement->bindValue($i, $values[i]);
-			$this->last_statement->bindValue($i + 1, $values[i + 1], PDO::PARAM_INT);
+			$this->last_statement->bindValue($i, $values[$i]);
+			$this->last_statement->bindValue($i + 1, $values[$i + 1], PDO::PARAM_INT);
 		}
 		$this->last_statement->execute();
 		
