@@ -143,7 +143,7 @@ class DataBaseConnection extends PDO {
 		
 		# Print out result
 		header("Content-Type: application/json");
-		echo '[' . $result . ']';
+ 		echo '{"dataSetID": ' . $result . '}';
 	}
 	
 	public function send_data_point($params) {
