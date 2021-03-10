@@ -279,7 +279,7 @@ def partition_data(data: DataFrame, percentage=0.8) -> tuple[DataFrame, Series, 
     :returns: Four chunks of data: X-axis training, Y-axis training, X-axis testing, Y-axis testing
     """
 
-    if percentage is None or 0 < percentage < 1:
+    if percentage is None or not (0 < percentage < 1):
         raise ValueError("Param percentage must lie in the open interval (0;1). Passed value was " + str(percentage))
     if data is None:
         raise ValueError("No data passed!")
