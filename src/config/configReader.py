@@ -26,8 +26,6 @@ class ConfigReader:
         """
         Returns the value corresponding to key from section if present, else None.
 
-        If the section does not exist, an Error is raised.
-
         :param section: The section to search in for key.
         :param key: The key, behind which is the desired value.
         :return: If section and key exist, the desired value is returned, else None.
@@ -36,7 +34,7 @@ class ConfigReader:
 
     def get_values(self, section) -> dict[str, str]:
         """
-        Returns all values associated with their keys which are in section.
+        Returns all values which are in section, associated with their keys.
 
         Raises an Error if section does not exist
         :param section: The desired section
