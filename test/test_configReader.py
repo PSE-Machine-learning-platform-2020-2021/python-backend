@@ -62,4 +62,7 @@ class ConfigReaderTest(TestCase):
         self.assertEqual(result, self.configParser.get("Test", "te at"))
 
     def test_get_values(self):
-        self.fail()
+        result = self.testedReader.get_values("USAR")
+        for x in result:
+            self.assertEqual(result[x], self.configParser.get("USAR", x))
+        self.assertRaises(configparser.NoSectionError, self.testedReader.get_values, "QXC")
