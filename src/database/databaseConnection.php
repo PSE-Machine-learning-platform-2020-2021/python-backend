@@ -117,10 +117,10 @@ class DataBaseConnection extends PDO {
 		$result = $this->lastInsertId();
 		
 		# Build and execute the statement creating empty datarows for this dataset
-		$sql = "INSERT INTO Datarow (datasetID, name, sensorID, dataJSON) VALUES";
+		$sql = "INSERT INTO Datarow (datarowID, datasetID, name, sensorID, dataJSON) VALUES";
 		$first = true;
 		$values = [];
-		foreach($params["dataRow"] as $dr) {
+		foreach($params["dataRow"] as $id => $dr) {
 			if(!$first) {
 				$sql .= ",";
 			}
@@ -128,24 +128,25 @@ class DataBaseConnection extends PDO {
 				$values[] = null;
 				$first = false;
 			}
-			$sql .= " ($result, ?, ?, '[]')";
+			$sql .= " (?, $result, ?, ?, '[]')";
+			$values[] = $id;
 			$values[] = (isset($dr["datarowName"])) ? $dr["datarowName"] : null;
 			$values[] = $dr["sensorID"];
 		}
 		$this->last_statement = $this->prepare($sql);
-		for($i = 1; $i < count($values) - 1; $i += 2) {
-			$this->last_statement->bindValue($i, $values[$i]);
-			$this->last_statement->bindValue($i + 1, $values[$i + 1], PDO::PARAM_INT);
+		for($i = 1; $i < count($values) - 2; $i += 3) {
+			$this->last_statement->bindValue($i, $values[$i], PDO::PARAM_INT);
+			$this->last_statement->bindValue($i + 1, $values[$i + 1]);
+			$this->last_statement->bindValue($i + 2, $values[$i + 2], PDO::PARAM_INT);
 		}
 		$this->last_statement->execute();
 		
 		# Print out result
 		header("Content-Type: application/json");
-		echo '{"result": ' . $result . '}';
+		echo '[' . $result . ']';
 	}
 	
 	public function send_data_point($params) {
-		echo $params["dataRowID"];
 		# Get data to update
 		$sql = "SELECT dataJSON FROM Datarow WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->get_data($sql);
@@ -160,7 +161,7 @@ class DataBaseConnection extends PDO {
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->execute();
 		header("Content-Type: application/json");
-        echo '{"result": ' . ($this->last_statement->rowCount() == 1) . '}';
+        echo '{"result": ' . (($this->last_statement->rowCount() == 1) ? 'true' : 'false') . '}';
 	}
 	
 	public function load_project($params) {
@@ -179,7 +180,7 @@ class DataBaseConnection extends PDO {
 		
 		# Load the datasets associated with the loaded project.
 		$result["dataSet"] = [];
-		$sql = "SELECT datasetID AS dataSetID, dataSetName, generateDate FROM Dataset WHERE projectID = {$params["projectID"]} AND projectAdminID = {$params["userID"]};";
+		$sql = "SELECT datasetID AS dataSetID, dataSetName, generateDate FROM Dataset WHERE projectID = {$params["projectID"]} AND projectAdminID = {$result["sessionID"]};";
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $data_set) {
 			# Load data rows associated with each loaded data set.
@@ -410,8 +411,8 @@ class DataBaseConnection extends PDO {
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->bindValue(1, $params["datasetID"], PDO::PARAM_INT);
 		$this->last_statement->bindValue(2, $params["label"]["labelName"]);
-		$this->last_statement->bindValue(3, $params["label"]["span"]["start"], PDO::PARAM_INT);
-		$this->last_statement->bindValue(4, $params["label"]["span"]["end"], PDO::PARAM_INT);
+		$this->last_statement->bindValue(3, $params["label"]["span"]["start"]);
+		$this->last_statement->bindValue(4, $params["label"]["span"]["end"]);
 		$this->last_statement->execute();
 
 		header("Content-Type: application/json");
