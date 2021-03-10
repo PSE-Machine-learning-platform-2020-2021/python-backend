@@ -304,7 +304,7 @@ def preprocess_data(data: DataFrame,
     """
     if not ready_to_use:
         scaler.fit(data)
-    return scaler.transform(data)
+    return DataFrame(scaler.transform(data), columns=data.columns, index=data.index)
 
 
 def train_classifier(x_axis_data: DataFrame, y_axis_data: Series,
