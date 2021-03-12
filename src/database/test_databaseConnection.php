@@ -5,12 +5,12 @@ include("databaseConnection.php");
 final class DataBaseConnectionTest extends TestCase {
 	private static $dbh;
 	
-	public function setUpBeforeClass(): void {
+	public static function setUpBeforeClass(): void {
 		self::$db = new DataBaseConnection();
 		
 	}
 	
-	public function tearDownAfterClass(): void {
+	public static function tearDownAfterClass(): void {
 		self::$db = null;
 	}
 	
@@ -26,11 +26,14 @@ final class DataBaseConnectionTest extends TestCase {
 				$this->assertIsString($data["languageName"], $data);
 			}
 		});
-		self:$db->get_language_metas();		
+		self::$db->get_language_metas();		
 	}
 	
-	public function test_(): void {
-		$this->markTestIncomplete();
+	public function test_load_language(): void {
+		$this->setOutputCallBack(function($output) {
+			$this->markTestIncomplete();
+		});
+		self::$db->load_language(array("languageCode" => "de-de"));
 	}
 	
 	public function test_(): void {

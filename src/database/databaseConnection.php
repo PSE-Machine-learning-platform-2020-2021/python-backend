@@ -3,6 +3,8 @@ class DataBaseConnection extends PDO {
     private $last_statement;
     /**
      * Creates a database connection
+	 * Important note for the usage of this class! All functions with parameter $params expect an array containing at least the keys that are specified in the doc string!!!
+	 *
      * @param $file - a json file containing the following JSON data:
      *                {
      *                    "host": ""
@@ -50,8 +52,8 @@ class DataBaseConnection extends PDO {
 
 	/**
 	 * Retrieves meta data about languages from corresponding database table.
-	 * @return None. Therefore, it has print output in JSON format, as follows. Each Language has its own list entry.
-	 *
+	 
+	 * @return void Therefore, it has print output in JSON format, as follows. Each Language has its own list entry.
 	 * 		[
 	 *			{"languageCode": "xx-xx", "languageName":"xxxxx"}
 	 * 		]
@@ -67,13 +69,14 @@ class DataBaseConnection extends PDO {
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 	
+	/**
+	 * Retrieves all stored data associated to the values passed as params
+	 
+	 * @param string languageCode The iso code of the language in form xx-xx
+	 * @return void It prints the contents of the field 'language' of the first database entry matching to languageCode. This is a list containing row by row some texts.
+	 */
 	public function load_language($params) {
-		$query_suffix = "";
-		foreach($params as $k => $v) {
-			$query_suffix .= "{$k} = \"{$v}\" OR";
-		}
-		$query_suffix = substr($query_suffix, 0, -3);
-		$sql = "SELECT language FROM Language WHERE " . $query_suffix;
+		$sql = "SELECT language FROM Language WHERE languageCode = {$params["languageCode"]}";
         $this->get_data($sql);
 		$result = $this->last_statement->fetch()["language"];
 		header("Content-Type: application/json");
