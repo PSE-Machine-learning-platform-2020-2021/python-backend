@@ -2,12 +2,15 @@
 """
 This file is sort of a function for the TypeScript front end and handles requests to classify data.
 """
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 import json
 import os
-import sys
 
-from src.buildModel.buildModel import IllegalArgumentError
-from src.database.database import Database
+from buildModel.buildModel import IllegalArgumentError
+from database.database import Database
 
 
 def fetch_parameters():
