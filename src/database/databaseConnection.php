@@ -3,6 +3,8 @@ class DataBaseConnection extends PDO {
     private $last_statement;
     /**
      * Creates a database connection
+	 * Important note for the usage of this class! All functions with parameter $params expect an array containing at least the keys that are specified in the doc string!!!
+	 *
      * @param $file - a json file containing the following JSON data:
      *                {
      *                    "host": ""
@@ -31,6 +33,7 @@ class DataBaseConnection extends PDO {
             $dns .= (isset($connection_data["port"])) ? ";port=" . $connection_data["port"] : "";
             $dns .= ";dbname=" . $connection_data["db"];
         }
+		$dns .= ";charset=utf8mb4";
         parent::__construct($dns, $connection_data["username"], $connection_data["password"]);
         $this->setAttribute(parent::ATTR_ERRMODE, parent::ERRMODE_EXCEPTION);
     }
@@ -49,6 +52,11 @@ class DataBaseConnection extends PDO {
 
 	/**
 	 * Retrieves meta data about languages from corresponding database table.
+	 
+	 * @return void Therefore, it has print output in JSON format, as follows. Each Language has its own list entry.
+	 * 		[
+	 *			{"languageCode": "xx-xx", "languageName":"xxxxx"}
+	 * 		]
 	 */
     public function get_language_metas() {
         $sql = "SELECT languageCode, languageName FROM Language;";
@@ -58,16 +66,17 @@ class DataBaseConnection extends PDO {
             $result[$k] = $v;
         }
 		header("Content-Type: application/json");
-        print_r(json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT));
+        echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 	
+	/**
+	 * Retrieves all stored data associated to the values passed as params
+	 
+	 * @param string languageCode The iso code of the language in form xx-xx
+	 * @return void It prints the contents of the field 'language' of the first database entry matching to languageCode. This is a list containing row by row some texts.
+	 */
 	public function load_language($params) {
-		$query_suffix = "";
-		foreach($params as $k => $v) {
-			$query_suffix .= "{$k} = \"{$v}\" OR";
-		}
-		$query_suffix = substr($query_suffix, 0, -3);
-		$sql = "SELECT language FROM Language WHERE " . $query_suffix;
+		$sql = "SELECT language FROM Language WHERE languageCode = {$params["languageCode"]}";
         $this->get_data($sql);
 		$result = $this->last_statement->fetch()["language"];
 		header("Content-Type: application/json");
@@ -173,13 +182,14 @@ class DataBaseConnection extends PDO {
 		#Load the ai models associated with the loaded project.
 		$sql = "SELECT aiModelID AS id FROM AIModel WHERE projectID = {$params["projectID"]} AND projectAdminID = {$params["userID"]}";
 		$this->get_data($sql);
-		$result["aiModelID"] = [];
+		$result["projectData"] = [];
+		$result["projectData"]["aiModelID"] = [];
 		foreach($this->last_statement->fetchAll() as $ai_model) {
-			$result["aiModelID"][] = $ai_model["id"];
+			$result["projectData"]["aiModelID"][] = $ai_model["id"];
 		}
 		
 		# Load the datasets associated with the loaded project.
-		$result["dataSet"] = [];
+		$result["projectData"]["dataSet"] = [];
 		$sql = "SELECT datasetID AS dataSetID, dataSetName, generateDate FROM Dataset WHERE projectID = {$params["projectID"]} AND projectAdminID = {$result["sessionID"]};";
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $data_set) {
@@ -205,13 +215,13 @@ class DataBaseConnection extends PDO {
 			$labels = $stmt3->fetchAll();
 			
 			# Put everything together.
-			$result["dataSet"][] = array("dataRowSensors" => $data_row_sensors, 
-			                             "dataSetId" => $data_set["dataSetID"], 
-										 "dataSetName" => $data_set["dataSetName"], 
-										 "generateDate" => $data_set["generateDate"], 
-										 "dataRows" => $data_rows, 
-										 "label" => $labels
-								   );
+			$result["projectData"]["dataSet"][] = array("dataRowSensors" => $data_row_sensors, 
+														"dataSetID" => $data_set["dataSetID"],
+														"dataSetName" => $data_set["dataSetName"], 
+														"generateDate" => $data_set["generateDate"], 
+														"dataRows" => $data_rows, 
+														"label" => $labels
+														);
 		}
 		
 		# Print out result.
