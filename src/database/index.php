@@ -47,7 +47,8 @@ switch($_GET["action"]) {
 		eval("\$db->${_GET["action"]}(\$_POST);");
 		break;
 	default:
-        throw new BadMethodCallException("This value is illegal. Intelligence Agency is informed.");
+		http_response_code(501);
+        throw new BadMethodCallException("This method name is illegal. Intelligence Agency is informed.");
 }
 ob_end_flush();
 ob_flush();
