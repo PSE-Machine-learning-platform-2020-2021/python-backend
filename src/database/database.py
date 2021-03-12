@@ -175,19 +175,22 @@ class Database:
         """
         if len(self._labels) > 0:
             return
-        query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN %s"""
+        query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN """
+        query += str(tuple(self.data_set_ids))
         cursor = self.data_base.cursor(dictionary=True)
-        cursor.execute(query, (str(tuple(self.data_set_ids)).strip("'"),))
+        cursor.execute(query)
         label_names: set[str] = set()
         result = cursor.fetchall()
         if len(result) == 0:
             raise ValueError
         for row in result:
             row["name"] = row["name"].strip().casefold().upper()  # This ensures unified all-uppercase format
-            label_names |= row["name"]
+            label_names.add(row["name"])
         self._labels = {k: v for k, v in enumerate(sorted(label_names))}
         self._labels_reversed = {v: k for k, v in enumerate(sorted(label_names))}
         for ds in self.data_sets:
+            if "label" not in ds.columns:
+                ds["label"] = -1
             timestamps = list(ds.index)
             for row in result:
                 if row["datasetID"] == ds.id:
