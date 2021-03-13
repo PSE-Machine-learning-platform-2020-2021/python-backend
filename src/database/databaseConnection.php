@@ -62,7 +62,7 @@ class DataBaseConnection extends PDO {
 	private function check_params(array $needed, int $line, array $actual): array {
 		$result = [];
 		foreach($needed as $name => $type) {
-			if(!isset($actual[$name]) {
+			if(!isset($actual[$name])) {
 				$result[] = "Param {$name} not set in " . __FILE__ . " on line {$line}.";
 			}
 			elseif(gettype($actual[$name]) !== $type) {
@@ -104,7 +104,7 @@ class DataBaseConnection extends PDO {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
 		}
-		$sql = "SELECT language FROM Language WHERE languageCode = {$params["languageCode"]}";
+		$sql = "SELECT language FROM Language WHERE languageCode = \"{$params["languageCode"]}\"";
         $this->get_data($sql);
 		$result = $this->last_statement->fetch()["language"];
         echo $result;
@@ -123,7 +123,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function create_project($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["userID" => "int", "projectName" => "string"], 124, $params);
+		$error = $this->check_params(["userID" => "integer", "projectName" => "string"], 124, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -170,9 +170,9 @@ class DataBaseConnection extends PDO {
 	 */
 	public function create_data_set($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["sessionID" => "int", "projectID" => "int", "userID" => "int", "dataSetName" => "string", "dataRow" => "array"], 171, $params);
+		$error = $this->check_params(["sessionID" => "integer", "projectID" => "integer", "userID" => "integer", "dataSetName" => "string", "dataRow" => "array"], 171, $params);
 		if(isset($params["dataRow"]) and is_array($params["dataRow"])) {
-			$error = array_merge($error, $this->check_params(["sensorID" => "int"], 171, $params["dataRow"]));
+			$error = array_merge($error, $this->check_params(["sensorID" => "integer"], 171, $params["dataRow"]));
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -204,7 +204,7 @@ class DataBaseConnection extends PDO {
 			}
 			$sql .= " (?, $result, ?, ?, '[]')";
 			$values[] = $id;
-			$values[] = (isset($dr["datarowName"])) ? $dr["datarowName"] : null;
+			$values[] = (isset($dr["datarowName"])) ? $dr["datarowName"] : "";
 			$values[] = $dr["sensorID"];
 		}
 		$this->last_statement = $this->prepare($sql);
@@ -233,9 +233,9 @@ class DataBaseConnection extends PDO {
 	 */
 	public function send_data_point($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["dataRowID" => "int", "dataSetID" => "int", "dataPoint" => "array"], 234, $params);
+		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "dataPoint" => "array"], 234, $params);
 		if(isset($params["dataPoint"]) and is_array($params["dataPoint"])) {
-			$error = array_merge($error, $this->check_params(["value" => "float", "relativeTime" => "float"], 234, $params["dataPoint"]));
+			$error = array_merge($error, $this->check_params(["value" => "double", "relativeTime" => "double"], 234, $params["dataPoint"]));
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -309,7 +309,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function load_project($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["userID" => "int", "projectID" => "int"], 310, $params);
+		$error = $this->check_params(["userID" => "integer", "projectID" => "integer"], 310, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -386,7 +386,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function get_project_metas($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["userID" => "int"], 387, $params);
+		$error = $this->check_params(["userID" => "integer"], 387, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -424,7 +424,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function delete_data_set($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["dataSetID" => "int", "userID" => "int", "projectID" => "int"], 425, $params);
+		$error = $this->check_params(["dataSetID" => "integer", "userID" => "integer", "projectID" => "integer"], 425, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -550,7 +550,7 @@ class DataBaseConnection extends PDO {
 	 */
 	public function register_dataminer($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["dataminerName" => "string", "sessionID" => "int", "device" => "array"], 551, $params);
+		$error = $this->check_params(["dataminerName" => "string", "sessionID" => "integer", "device" => "array"], 551, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -685,11 +685,11 @@ class DataBaseConnection extends PDO {
 	 */
 	public function create_label($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["datasetID" => "int", "label" => "array"], 686, $params);
+		$error = $this->check_params(["datasetID" => "integer", "label" => "array"], 686, $params);
 		if(isset($params["label"]) and is_array($params["label"])) {
-			$error = array_merge($error, $this->check_params(["labelName" => "string", "span" => "array"], 686, $params["label"]);
+			$error = array_merge($error, $this->check_params(["labelName" => "string", "span" => "array"], 686, $params["label"]));
 			if(isset($params["label"]["span"]) and is_array($params["label"]["span"])) {
-				$error = array_merge($error, $this->check_params(["start" => "float", "end" => "float"], 686, $params["label"]["span"]);
+				$error = array_merge($error, $this->check_params(["start" => "double", "end" => "double"], 686, $params["label"]["span"]));
 			}
 		}
 		if(count($error) > 0) {
@@ -720,9 +720,9 @@ class DataBaseConnection extends PDO {
 	 */
 	public function set_label($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["datasetID" => "int", "label" => "array"], 721, $params);
+		$error = $this->check_params(["datasetID" => "integer", "label" => "array"], 721, $params);
 		if(isset($params["label"]) and is_array($params["label"])) {
-			$error = array_merge($error, $this->check_params(["labelName" => "string", "labelID" => "int"], 721, $params["label"]);
+			$error = array_merge($error, $this->check_params(["labelName" => "string", "labelID" => "integer"], 721, $params["label"]));
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -765,13 +765,13 @@ class DataBaseConnection extends PDO {
 	 */
 	public function delete_label($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["datasetID" => "int", "labelID" => "int"], 766, $params);
+		$error = $this->check_params(["datasetID" => "integer", "labelID" => "integer"], 766, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
 		}
 		# Build and execute statement
-		$sql = "DELETE FROM Label WHERE datasetID = {$params["dataSetID"]} AND labelID = {$params["labelID"]}";
+		$sql = "DELETE FROM Label WHERE datasetID = {$params["dataSetID"]} AND labelID = {$params["labelID"]};";
 		$result = $this->get_data($sql);
 		
 		# Print out result.
