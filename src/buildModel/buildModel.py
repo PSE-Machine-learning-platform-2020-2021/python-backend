@@ -196,6 +196,7 @@ def impute(data: DataFrame, imputator: Union[SimpleImputer]) -> DataFrame:
     """
     data = data.replace([np.inf, -np.inf], np.NaN)
     if data.isna().values.any():
+        print(data)
         imputator.fit(data)
         return DataFrame(imputator.transform(data), columns=data.columns, index=data.index)
     return data

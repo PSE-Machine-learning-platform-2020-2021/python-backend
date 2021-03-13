@@ -40,6 +40,7 @@ class DataBaseConnection extends PDO {
 
     /**
 	 * Executes mindlessly an SQL query Please use only for queries without input data.
+	 *
      * @param $what SQL query to execute
 	 * @return true if query was successful, false otherwise, as PDOStatement::execute does.
      */
@@ -49,6 +50,27 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->setFetchMode(parent::FETCH_ASSOC);
 		return $result;
     }
+	
+	/**
+	 * Checks params by given list of needed params.
+	 * 
+	 * @param array $needed the list of needed params as assoc array with the keys being the param names and the values their types.
+	 * @param int   $line   the line where the params are needed.
+	 * @param array $actual the array of actual passed params.
+	 * @return array all the error messages, if any.
+	 */
+	private function check_params(array $needed, int $line, array $actual): array {
+		$result = [];
+		foreach($needed as $name => $type) {
+			if(!isset($actual[$name]) {
+				$result[] = "Param {$name} not set in " . __FILE__ . " on line {$line}.";
+			}
+			elseif(gettype($actual[$name]) !== $type) {
+				$result[] = "Param {$name} has not type {$type}, but type " . gettype($actual[$name]) . " in " . __FILE__ . " on line {$line}.";
+			}
+		}
+		return $result;
+	}
 
 	/**
 	 * Retrieves meta data about languages from corresponding database table.
@@ -73,17 +95,39 @@ class DataBaseConnection extends PDO {
 	 * Retrieves all stored data associated to the values passed as params
 	 
 	 * @param string languageCode The iso code of the language in form xx-xx
-	 * @return void It prints the contents of the field 'language' of the first database entry matching to languageCode. This is a list containing row by row some texts.
+	 * @return void  It prints the contents of the field 'language' of the first database entry matching to languageCode. This is a list containing row by row some texts. If the param is not set or its type not correct, an error message in json format is printed instead.
 	 */
 	public function load_language($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["languageCode" => "string"], 100, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$sql = "SELECT language FROM Language WHERE languageCode = {$params["languageCode"]}";
         $this->get_data($sql);
 		$result = $this->last_statement->fetch()["language"];
-		header("Content-Type: application/json");
         echo $result;
 	}
 	
+	/**
+	 * Creates a new entry in project database table.
+	 *
+	 * @param int 	 userID		 The id of the current user's database entry in the user table.
+	 * @param string projectName THe name of the new project.
+	 * @return void  Prints an json object as seen below. If the params are not set or their types not correct, error messages in json format are printed instead.
+	 *		{
+	 *			"sessionID": 1,
+	 *			"projectID": 1
+	 *		}
+	 */
 	public function create_project($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["userID" => "int", "projectName" => "string"], 124, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$result = [];
 		
 		# Create Session id
@@ -101,20 +145,41 @@ class DataBaseConnection extends PDO {
 		$result["projectID"] = $this->lastInsertId();
 		
 		# Print out result
-		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);	
 	}
 	
 	/**
-	 * This function inserts a new Datasets together with its datarows in the according tables.
-	 * @param sessionID   - the id of the current Session to compare it against the given project id for verification purposes.
-	 *                      It is also used to retrieve the id of the admin of the project passed in projectID
-	 * @param projectID   - the project id to store in the dataset for better retrieving it later
-	 * @param userID      - the id of the user creating this dataset
-	 * @param dataSetName - the name of the dataset
-	 * @param dataRow     - a list of datarows belonging to this dataset.
+	 * This function inserts a new Dataset together with its datarows in the according database tables.
+	 
+	 * @param int    sessionID   - the id of the current Session to compare it against the given project id for verification purposes.
+	 *            	               It is also used to retrieve the id of the admin of the project passed in projectID
+	 * @param int    projectID   - the project id to store in the dataset for better retrieving it later
+	 * @param int    userID      - the id of the user creating this dataset
+	 * @param string dataSetName - the name of the dataset
+	 * @param array  dataRow     - a list of datarows belonging to this dataset. it has to come in following format:
+	 * 		[
+	 *			[
+	 *				"datarowName": "xxx", 	// optional
+	 *				"sensorID": 1 			// use sensorTypeID!
+	 *			]
+	 *		]
+	 * @return void  Prints a json array with the ID of the newly created data set, as described below or json formatted error messages if the parameters don't fit.
+	 *		{
+	 * 			"dataSetID": 1
+	 *		}
 	 */
 	public function create_data_set($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["sessionID" => "int", "projectID" => "int", "userID" => "int", "dataSetName" => "string", "dataRow" => "array"], 171, $params);
+		if(isset($params["dataRow"]) and is_array($params["dataRow"])) {
+			$error = array_merge($error, $this->check_params(["sensorID" => "int"], 171, $params["dataRow"]));
+		}
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
+		
+		$result = [];
 		# Execute statement creating the dataset.
 		$sql = "INSERT INTO Dataset (projectID, userID, dataSetName, projectAdminID) VALUES (?, ?, ?, ?)";
 		$this->last_statement = $this->prepare($sql);
@@ -151,11 +216,31 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->execute();
 		
 		# Print out result
-		header("Content-Type: application/json");
  		echo '{"dataSetID": ' . $result . '}';
 	}
 	
+	/**
+	 * Updates the data row specified in dataRowID by a new value associated with a relative time value.
+	 *
+	 * @param int   dataRowID the data row to update
+	 * @param int   dataSetID the data set the data row belongs to.
+	 * @param array dataPoint the new data point as in following format. Note that both values are required to be floats.
+	 * 		[
+	 *			"value": 1.0,
+	 * 			"relativeTime": 1.0
+	 *		]
+	 * @return void  Prints a json formatted object with an only member result indicating successful datapoint insertion. Prints instead json formatted error messages if the params do not match in any way.
+	 */
 	public function send_data_point($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["dataRowID" => "int", "dataSetID" => "int", "dataPoint" => "array"], 234, $params);
+		if(isset($params["dataPoint"]) and is_array($params["dataPoint"])) {
+			$error = array_merge($error, $this->check_params(["value" => "float", "relativeTime" => "float"], 234, $params["dataPoint"]));
+		}
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		# Get data to update
 		$sql = "SELECT dataJSON FROM Datarow WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->get_data($sql);
@@ -169,11 +254,66 @@ class DataBaseConnection extends PDO {
 		$sql = "UPDATE Datarow SET dataJSON = '{$data}' WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->execute();
-		header("Content-Type: application/json");
         echo '{"result": ' . (($this->last_statement->rowCount() == 1) ? 'true' : 'false') . '}';
 	}
 	
+	/**
+	 * Loads a project from the project database table. It is identified via project and user id.
+	 *
+	 * @param int   projectID the id of the project in its table
+	 * @param int   userID    the id of the user owning that specific project
+	 * @return void Prints a json formatted object in a format as described below. Prints instead json formatted error messages if the params do not match in any way.
+	 * {
+	 *		"projectID": 1,
+	 *		"sessionID": 1,
+	 *		"projectName": "xxx",
+	 *		"projectData": {
+	 *			"aiModelID": [
+	 *				1
+	 *			],
+	 *			"dataSet": [
+	 *				{
+	 *					"dataRowSensors": [
+	 *						{
+	 * 							"sensorID": 1,
+	 *							"deviceUniqueSensorID": 1,
+	 *							"sensorTypeID": 1,
+	 *							"sensorName": "xxx",
+	 *							"deviceID": 1
+	 *						}
+	 *					],
+	 *					"dataSetId": 1,
+	 *					"dataSetName": "xxx",
+	 *					"generateDate": 1,	// as UNIX Timestamp
+	 *					"dataRows": [
+	 *						{
+	 *							"dataRowID": 1,
+	 *							"recordingStart": -1, // hard value as it is not av. in db
+	 *							"dataRow": [
+	 *								{"value": 1.0, "relativeTime": 1.0}
+	 *							]
+	 *						}
+	 *					],
+	 *					"label": [
+	 *						{
+	 *							"name": "xxx",
+	 *							"labelID": 1,
+	 *							"start": 1.0,
+	 *							"end": 1.0
+	 *						}
+	 *					]
+	 *				}
+	 *			]
+	 *		}
+	 *	}
+	 */
 	public function load_project($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["userID" => "int", "projectID" => "int"], 310, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		# Load the project itself.
 		$sql = "SELECT projectID, sessionID, name AS projectName FROM Project WHERE projectID = {$params["projectID"]} AND adminID = {$params["userID"]};";
 		$this->get_data($sql);
@@ -218,7 +358,7 @@ class DataBaseConnection extends PDO {
 			$result["projectData"]["dataSet"][] = array("dataRowSensors" => $data_row_sensors, 
 														"dataSetId" => $data_set["dataSetID"], 
 														"dataSetName" => $data_set["dataSetName"], 
-														"generateDate" => $data_set["generateDate"], 
+														"generateDate" => strtotime($data_set["generateDate"]),
 														"dataRows" => $data_rows, 
 														"label" => $labels
 														);
@@ -231,10 +371,26 @@ class DataBaseConnection extends PDO {
 	
 	/**
 	 * Requests all project with all affiliated data belonging to a specific user.
-	 * @param userID - The number associated with the specific user from description.
-	 * @return All projects.
+	 
+	 * @param int userID - The number associated with the specific user from description.
+	 * @return void Prints out a json array containing all matching projects as described below or a json formatted error message, if the parameter does not fit.
+	 * [
+	 *		{
+	 *			"projectID": 1,
+	 *			"projectName": "xxx",
+	 *			"aiModelID": [
+	 *				1
+	 *			],
+	 *		}
+	 *	]	
 	 */
 	public function get_project_metas($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["userID" => "int"], 387, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$result = [];
 		$sql = "SELECT projectID, name as projectName FROM Project WHERE adminID = {$params["userID"]}";
 		$this->get_data($sql);
@@ -252,22 +408,76 @@ class DataBaseConnection extends PDO {
 		}
 		
 		# Print out result.
-		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
+	/**
+	 * Deletes a data set from its data base table.
+	 *
+	 * @param int dataSetID the id of the data set to delete
+	 * @param int userID    the id of the admin user that own the project to which the data set belongs to
+	 * @param int projectID the id of the project the data set belongs to 
+	 * @return void 		Prints json formatted if the data set was successfully deleted as described below or json formatted error messages if the parameters don't fit.
+	 *		{
+	 *			"result": true|false
+	 *		}
+	 */
 	public function delete_data_set($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["dataSetID" => "int", "userID" => "int", "projectID" => "int"], 425, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		# Build and execute statement
 		$sql = "DELETE FROM Datarow WHERE datasetID = {$params["dataSetID"]};\r\n";
 		$sql .= "DELETE FROM Dataset WHERE datasetID = {$params["dataSetID"]} AND userID = {$params["userID"]} AND projectID = {$params["projectID"]}";
 		$result = $this->get_data($sql);
 		
 		# Print out result.
-		header("Content-Type: application/json");
         echo '{"result": ' . $result . '}';
 	}
 	
-	public function register_admin($params) {	
+	/**
+	 * Creates a new entry in user and admin data base table and thus registers a new admin user.
+	 * There is no parameter check for the contents of parameter device as the data is not really needed persistant and should be removed in future releases.
+	 *
+	 * @param string adminEmail the email address of the new admin user.
+	 * @param string adminName  the user name.
+	 * @param string password   the log in password.
+	 * @param array  device     an array containing information about the device of the user, as follows:
+	 *		[
+	 *			"deviceName": "xxx",
+	 *			"deviceType": "xxx",
+	 *			"firmware": "xxx",
+	 *			"generation": "xxx",
+	 *			"MACADRESS": "xxx",
+	 *			"sensorInformation:" [
+	 *				[
+	 *					"sensorTypeID": 1,
+	 *					"sensorName": "xxx",
+	 *					"deviceUniqueSensorID": 1,
+	 *				]
+	 *			]
+	 *		]
+	 * @return void 		    Prints out a json formatted object as described below or an also json formatted error message, if the parameters don't fit.
+	 * 		{
+	 *	 		"adminID": 1,
+	 *			"device": {
+	 *				"deviceID": 1,
+	 *				"sensorID": [
+	 *					1
+	 *				]
+	 *			}
+	 *		}
+	 */
+	public function register_admin($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["adminEmail" => "string", "adminName" => "string", "password" => "string", "device" => "array"], 474, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$sql = "SELECT * FROM Admin WHERE eMail = \"{$params["adminEmail"]}\";";
 		$this->get_data($sql);
 		if (count($this->last_statement->fetchAll()) > 0) {
@@ -298,11 +508,53 @@ class DataBaseConnection extends PDO {
 		$_SESSION["loogged_in"] = $result["adminID"];
 				
 		# Print out result.
-		header("Content-Type: application/json");
         echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
+	/**
+	 * Creates a new entry in user data base and thus registers a new data miner user. 
+	 * There is no validation check for the contents of parameter device. See register_admin for further details.
+	 *
+	 * @param string dataminerName  the user name.
+	 * @param int    sessionID   the session id unter which the data miner user started the program.
+	 * @param array  device     an array containing information about the device of the user, as follows:
+	 *		[
+	 *			"deviceName": "xxx",
+	 *			"deviceType": "xxx",
+	 *			"firmware": "xxx",
+	 *			"generation": "xxx",
+	 *			"MACADRESS": "xxx",
+	 *			"sensorInformation:" [
+	 *				[
+	 *					"sensorTypeID": 1,
+	 *					"sensorName": "xxx",
+	 *					"deviceUniqueSensorID": 1,
+	 *				]
+	 *			]
+	 *		]
+	 * @return void 		    Prints out a json formatted object as described below or an also json formatted error message, if the parameters don't fit.
+	 * 		{
+	 *	 		"dataminerID": 1,
+	 *			"project": {
+	 *				"projectID": 1,
+	 *				"projectName": "xxx",
+	 *				"sessionID": 1
+	 *			}
+	 *			"device": {
+	 *				"deviceID": 1,
+	 *				"sensorID": [
+	 *					1
+	 *				]
+	 *			}
+	 *		}
+	 */
 	public function register_dataminer($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["dataminerName" => "string", "sessionID" => "int", "device" => "array"], 551, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$result = [];
 		
 		# Build and execute registration statement
@@ -320,48 +572,29 @@ class DataBaseConnection extends PDO {
 		$result["device"] = $this->register_device($params["device"], $result["dataminerID"]);
 		
 		# Print out result.
-		header("Content-Type: application/json");
 		echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
-	
-# TODO Add possibility to registrate	
-#	public function register_ai_model_user($params) {
-#		$result["device"] = register_device($params["device"], $result["dataminerID"]);
-#
-#		# Print out result.
-#		header("Content-Type: application/json");
-#		echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
-#	}
 	
 	/**
 	 * Creates a new device in the Device table.
 	 *
-	 * @param deviceName        - the name of the device
-	 * @param deviceType        - the specific type of the device
-	 * @param firmware          - the firmware of the device
-	 * @param generation        - the generation of the device
-	 * @param MACADRESS         - the MAC address of the device
-	 * @param sensorInformation - an array containing some information about the device's sensors. 
-	 * @return the device id and the global sensor ids
+	 * @param string deviceName - the name of the device
+	 * @param string deviceType        - the specific type of the device
+	 * @param string firmware          - the firmware of the device
+	 * @param string generation        - the generation of the device
+	 * @param string MACADRESS         - the MAC address of the device
+	 * @param array sensorInformation - an array containing some information about the device's sensors:
+	 * 		[
+	 *			[
+	 *				"sensorTypeID": 1,
+	 *				"sensorName": "xxx",
+	 *				"deviceUniqueSensorID": 1,
+	 *			]
+	 *		]
+	 * @param int $user_id
+	 * @return array - the device id and the global sensor ids.
 	 */
 	private function register_device($params, $user_id) {
-		/* This only lowers the usability - thus it is no longer in service.
-		$sql = "SELECT deviceID, userID FROM Device WHERE MACADDRESS = '{$params["MACADRESS"]}'";
-		$this->get_data($sql);
-		foreach($this->last_statement->fetchAll() as $row) {
-			if ($user_id === $row["userID"]) {
-				$sql = "SELECT sensorID FROM Sensor WHERE deviceID = {$row["deviceID"]}";
-				$stmt = $this->prepare($sql);
-				$stmt->execute();
-				$result = [];
-				foreach($stmt->fetchAll() as $sensor) {
-					$result[] = $sensor["sensorID"];
-				}
-				return array("deviceID" => $row["deviceID"], "sensorID" => $result);
-			}
-			return array("deviceID" => -1, "sensorID" => array(-1));
-		}
-		*/
 		# Create Device entry.		
 		$sql = "INSERT INTO Device (firmware, generation, MACADDRESS, name, type, userID) VALUES (?, ?, ?, ?, ?, ?)";
 		$this->last_statement = $this->prepare($sql);
@@ -372,6 +605,7 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->bindValue(5, $params["deviceType"]);
 		$this->last_statement->bindValue(6, $user_id, PDO::PARAM_INT);
 		$this->last_statement->execute();
+		$result = [];
 		$result["deviceID"] = $this->lastInsertId();
 		
 		# Create sensor information
@@ -390,7 +624,28 @@ class DataBaseConnection extends PDO {
 		return $result;
 	}
 
+	/**
+	 * This function retrieves data about the user authenticating with email and password.
+	 * 
+	 * @param string adminEmail - the email address of the user that wants to log in
+	 * @param string password   - the password corresponding to that email address
+	 * @return void             - prints a json formatted object that contains various data about the user that just successfully logged in, or an empty array, if there was no success. Prints json formatted error messages if the parameters don't fit.
+	 *		{
+	 *	 		"admin": {
+	 *				"adminID": 1,
+	 *				"email": "xxx",
+	 *				"adminName": "xxx",
+	 *				"deviceID": 1
+	 *			}
+	 * 		}
+	 */
 	public function login_admin($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["adminEmail" => "string", "password" => "string"], 634, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		$result = [];
 		
 		# Build and execute data comparing statement
@@ -411,11 +666,36 @@ class DataBaseConnection extends PDO {
 		}
 		
 		# Print out result.
-		header("Content-Type: application/json");
 		echo json_encode($result, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 	}
 	
+	/**
+	 * Creates a new label entry in its data base table.
+	 *
+	 * @param int   datasetID - the numeric id of the data set this label belongs to.
+	 * @param array label     - an array containing all information about this label, as described below:
+	 *		[
+	 *			"labelName": "xxx",
+	 *			"span": [
+	 *				"start": 1.0,
+	 *				"end": 1.0
+	 *			]
+	 *		]
+	 * @return void           - prints out a json formatted object containing as only key the labelID which is an unsigned int >= 1 or json formatted error messages if the parameters don't fit.
+	 */
 	public function create_label($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["datasetID" => "int", "label" => "array"], 686, $params);
+		if(isset($params["label"]) and is_array($params["label"])) {
+			$error = array_merge($error, $this->check_params(["labelName" => "string", "span" => "array"], 686, $params["label"]);
+			if(isset($params["label"]["span"]) and is_array($params["label"]["span"])) {
+				$error = array_merge($error, $this->check_params(["start" => "float", "end" => "float"], 686, $params["label"]["span"]);
+			}
+		}
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 
 		$sql = "INSERT INTO Label (datasetID, name, start, end) VALUES (?, ?, ?, ?);";
 		$this->last_statement = $this->prepare($sql);
@@ -425,11 +705,29 @@ class DataBaseConnection extends PDO {
 		$this->last_statement->bindValue(4, $params["label"]["span"]["end"]);
 		$this->last_statement->execute();
 
-		header("Content-Type: application/json");
 		echo '{"labelID": ' . $this->lastInsertId() . '}';
 	}
 	
-	public function set_label($params) {		
+	/**
+	 * This method updates an already existing label.
+	 *
+	 * @param int    datasetID        - the if of the data set the label belongs to.
+	 * @param int    label.labelID    - the if of the label itself.
+	 * @param string label.labelName  - Optional. The new name of the label.
+	 * @param float  label.span.start - Optional. The new starting time of the label.
+	 * @param float  label.span.end   - Optional. The new ending time of the label.
+	 * @return void                   - Prints out a json formatted object containing as only key 'success' which is only true if no update operation failed or json formatted error messages if the parameters don't fit.
+	 */
+	public function set_label($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["datasetID" => "int", "label" => "array"], 721, $params);
+		if(isset($params["label"]) and is_array($params["label"])) {
+			$error = array_merge($error, $this->check_params(["labelName" => "string", "labelID" => "int"], 721, $params["label"]);
+		}
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}		
 		$sql_prefix = "UPDATE Label SET ";
 		$sql_suffix = " WHERE datasetID = {$params["datasetID"]} AND labelID = {$params["label"]["labelID"]}";
 		$result = [];
@@ -444,36 +742,47 @@ class DataBaseConnection extends PDO {
 		if(isset($params["label"]["span"]["start"])) {
 			$sql = $sql_prefix . "start = ?" . $sql_suffix;
 			$this->last_statement = $this->prepare($sql);
-			$this->last_statement->bindValue(1, $params["label"]["span"]["start"], PDO::PARAM_INT);
+			$this->last_statement->bindValue(1, $params["label"]["span"]["start"]);
 			$result[] = $this->last_statement->execute();
 		}
 		if(isset($params["label"]["span"]["end"])) {
 			$sql = $sql_prefix . "end = ?" . $sql_suffix;
 			$this->last_statement = $this->prepare($sql);
-			$this->last_statement->bindValue(1, $params["label"]["span"]["end"], PDO::PARAM_INT);
+			$this->last_statement->bindValue(1, $params["label"]["span"]["end"]);
 			$result[] = $this->last_statement->execute();
 		}
 		
 		# Return false as soon as at least one query fails.
-		header("Content-Type: application/json");
 		echo '{"success": ' . !in_array(false, $result, true) . '}';
 	}
 	
+	/**
+	 * This method deletes an existing label.
+	 *
+	 * @param int    datasetID - the if of the data set the label belongs to.
+	 * @param int    labelID   - the if of the label itself.
+	 * @return void            - Prints out a json formatted object containing as only key 'result' which is true if the label was successfully deleted or json formatted error messages if the parameters don't fit.
+	 */
 	public function delete_label($params) {
+		header("Content-Type: application/json");
+		$error = $this->check_params(["datasetID" => "int", "labelID" => "int"], 766, $params);
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
 		# Build and execute statement
 		$sql = "DELETE FROM Label WHERE datasetID = {$params["dataSetID"]} AND labelID = {$params["labelID"]}";
 		$result = $this->get_data($sql);
 		
 		# Print out result.
-		header("Content-Type: application/json");
         echo '{"result": ' . $result . '}';
 	}
 	
 	/**
 	 * This method retrieves an email address by user id from the admins database table and returns it - in opposite to all other methods, that simply print their result.
 	 *
-	 * @param $uid - the numeric user id of of whom the email address is to be retrieved.
-	 * @return the corresponding email address together with the name, each located under 'email', resp. 'name'
+	 * @param int $uid - the numeric user id of of whom the email address is to be retrieved.
+	 * @return array   - the corresponding email address together with the name, each located under 'email', resp. 'name'
 	 */
 	public function get_email($uid) {
 		$sql = "SELECT name, eMail AS email FROM User, Admin WHERE Admin.userID = {$uid} AND User.UserID = {$uid}";
