@@ -59,7 +59,7 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertCount(1, $data["error"]);
 	}
 	
-	public function test_create_project(): void {
+	public function test_create_project_1(): void {
 		@self::$db->create_project(array("userID" => 53, "projectName" => "T-14"));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
@@ -70,6 +70,9 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertArrayHasKey("projectID", $data);
 		$this->assertIsInt($data["projectID"]);
 		$this->assertGreaterThanOrEqual(1, $data["projectID"]);
+	}
+	
+	public function test_create_project_2(): void {
 		@self::$db->create_project(array("userID" => false, "projectName" => -1));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
@@ -78,6 +81,9 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertArrayHasKey("error", $data);
 		$this->assertIsArray($data["error"]);
 		$this->assertCount(2, $data["error"]);
+	}
+	
+	public function test_create_project_3(): void {
 		@self::$db->create_project(array());
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
@@ -89,7 +95,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_create_data_set(): void {
-		@self::$db->create_data_set(array("userID" => 53, "projectID" => 13, "sessionID" => 100, "dataSetName" => "T-14-1", "dataRow" => array("dataRowName" => "T-14-1 1", "sensorID" => 1)));
+		@self::$db->create_data_set(array("userID" => 9, "projectID" => 13, "sessionID" => 100, "dataSetName" => "T-14-1", "dataRow" => array(array("datarowName" => "T-14-1 1", "sensorID" => 42))));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
@@ -100,7 +106,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_send_data_point(): void {
-		@self::$db->send_data_point(array("dataRowID" => 1, "dataSetID" => 0, "sessionID" => 100, "dataPoint" => array("value" => 1.0, "relativeTime" => 0.625)));
+		@self::$db->send_data_point(array("dataRowID" => 1, "dataSetID" => 0, "sessionID" => 100, "dataPoint" => array("value" => [1.0], "relativeTime" => 0.625)));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
@@ -111,7 +117,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_load_project(): void {
-		@self::$db->load_project(array("userID" => 53, "projectID" => 13));
+		@self::$db->load_project(array("userID" => 9, "projectID" => 13));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
@@ -166,10 +172,10 @@ final class DataBaseConnectionTest extends TestCase {
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
 		foreach($data as $project) {
-			$this->assertTrue(isset($project["projectID"], $project["projectName"], $project["aiModelID"]));
+			$this->assertTrue(isset($project["projectID"], $project["projectName"], $project["AIModelID"]));
 			$this->assertIsInt($project["projectID"]);
 			$this->assertIsString($project["projectName"]);
-			$this->assertIsArray($project["aiModelID"]);
+			$this->assertIsArray($project["AIModelID"]);
 		}
 	}
 	
@@ -224,7 +230,7 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertIsString($data["project"]["projectName"]);
 		$this->assertArrayHasKey("sessionID", $data["project"]);
 		$this->assertIsInt($data["project"]["sessionID"]);
-		$this->assertArrayHasKey("device", $data["project"]);
+		$this->assertArrayHasKey("device", $data);
 		$this->assertIsArray($data["device"]);
 		$this->assertCount(2, $data["device"]);
 		$this->assertArrayHasKey("deviceID", $data["device"]);
@@ -267,7 +273,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_delete_label(): void {
-		@self::$db->delete_label(array("datasetID" => 36, "labelID" => 42));
+		@self::$db->delete_label(array("dataSetID" => 36, "labelID" => 42));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);

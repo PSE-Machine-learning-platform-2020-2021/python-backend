@@ -172,7 +172,12 @@ class DataBaseConnection extends PDO {
 		header("Content-Type: application/json");
 		$error = $this->check_params(["sessionID" => "integer", "projectID" => "integer", "userID" => "integer", "dataSetName" => "string", "dataRow" => "array"], 171, $params);
 		if(isset($params["dataRow"]) and is_array($params["dataRow"])) {
-			$error = array_merge($error, $this->check_params(["sensorID" => "integer"], 171, $params["dataRow"]));
+			foreach($params["dataRow"] as $id => $dr) {
+				$error = array_merge($error, $this->check_params([$id => "array"], 171, $params["dataRow"]));
+				if(isset($dr) and is_array($dr)) {
+					$error = array_merge($error, $this->check_params(["sensorID" => "integer"], 171, $dr));
+				}
+			}
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -226,7 +231,7 @@ class DataBaseConnection extends PDO {
 	 * @param int   dataSetID the data set the data row belongs to.
 	 * @param array dataPoint the new data point as in following format. Note that both values are required to be floats.
 	 * 		[
-	 *			"value": 1.0,
+	 *			"value": [1.0],
 	 * 			"relativeTime": 1.0
 	 *		]
 	 * @return void  Prints a json formatted object with an only member result indicating successful datapoint insertion. Prints instead json formatted error messages if the params do not match in any way.
@@ -235,7 +240,7 @@ class DataBaseConnection extends PDO {
 		header("Content-Type: application/json");
 		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "dataPoint" => "array"], 234, $params);
 		if(isset($params["dataPoint"]) and is_array($params["dataPoint"])) {
-			$error = array_merge($error, $this->check_params(["value" => "double", "relativeTime" => "double"], 234, $params["dataPoint"]));
+			$error = array_merge($error, $this->check_params(["value" => "array", "relativeTime" => "double"], 234, $params["dataPoint"]));
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -330,7 +335,10 @@ class DataBaseConnection extends PDO {
 		
 		# Load the datasets associated with the loaded project.
 		$result["projectData"]["dataSet"] = [];
-		$sql = "SELECT datasetID AS dataSetID, dataSetName, generateDate FROM Dataset WHERE projectID = {$params["projectID"]} AND projectAdminID = {$result["sessionID"]};";
+		$sql = "SELECT datasetID AS dataSetID, dataSetName, generateDate 
+			FROM Dataset 
+			WHERE projectID = {$params["projectID"]} 
+			AND projectAdminID = {$result["sessionID"]}";
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $data_set) {
 			# Load data rows associated with each loaded data set.
@@ -378,7 +386,7 @@ class DataBaseConnection extends PDO {
 	 *		{
 	 *			"projectID": 1,
 	 *			"projectName": "xxx",
-	 *			"aiModelID": [
+	 *			"AIModelID": [
 	 *				1
 	 *			],
 	 *		}
@@ -435,7 +443,7 @@ class DataBaseConnection extends PDO {
 		$result = $this->get_data($sql);
 		
 		# Print out result.
-        echo '{"result": ' . $result . '}';
+        echo '{"result": ' . (($result) ? 'true' : 'false') . '}';
 	}
 	
 	/**
@@ -753,19 +761,19 @@ class DataBaseConnection extends PDO {
 		}
 		
 		# Return false as soon as at least one query fails.
-		echo '{"success": ' . !in_array(false, $result, true) . '}';
+		echo '{"success": ' . ((in_array(false, $result, true)) ? "false" : "true") . '}';
 	}
 	
 	/**
 	 * This method deletes an existing label.
 	 *
-	 * @param int    datasetID - the if of the data set the label belongs to.
+	 * @param int    dataSetID - the if of the data set the label belongs to.
 	 * @param int    labelID   - the if of the label itself.
 	 * @return void            - Prints out a json formatted object containing as only key 'result' which is true if the label was successfully deleted or json formatted error messages if the parameters don't fit.
 	 */
 	public function delete_label($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["datasetID" => "integer", "labelID" => "integer"], 766, $params);
+		$error = $this->check_params(["dataSetID" => "integer", "labelID" => "integer"], 766, $params);
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -775,7 +783,7 @@ class DataBaseConnection extends PDO {
 		$result = $this->get_data($sql);
 		
 		# Print out result.
-        echo '{"result": ' . $result . '}';
+        echo '{"result": ' . (($result) ? "true" : "false") . '}';
 	}
 	
 	/**
