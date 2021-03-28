@@ -70,8 +70,10 @@ class Database:
             # Integrate all the data rows found into the dataset
             for data_row in cursor.fetchall():
                 name: str = data_row["sensorName"] if data_row["name"] is None else data_row["name"]
-                data_set[name] = {x["relativeTime"]: x["value"] for x in json.loads(data_row["dataJSON"])}
-                times |= set(data_set[name].keys())
+                data_rows_loaded = json.loads(data_row["dataJSON"])
+                for y in range(data_rows_loaded[0]["value"]):
+                    data_set[name + " " + str(y)] = {x["relativeTime"]: x["value"][y] for x in data_rows_loaded}
+                    times |= set(data_set[name + " " + str(y)].keys())
 
             # Ensure that all data rows feature exactly equal sets of timestamps and in all cases have values there and
             # that all values are in correct ascending order by timestamp
