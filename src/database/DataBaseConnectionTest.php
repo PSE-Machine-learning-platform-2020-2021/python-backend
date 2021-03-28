@@ -106,7 +106,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_send_data_point(): void {
-		@self::$db->send_data_point(array("dataRowID" => 1, "dataSetID" => 0, "sessionID" => 100, "dataPoint" => array("value" => [1.0], "relativeTime" => 0.625)));
+		@self::$db->send_data_point(array("dataRowID" => 1, "dataSetID" => 0, "sessionID" => 100, "datapoint" => array("value" => [1.0], "relativeTime" => 0.625)));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);

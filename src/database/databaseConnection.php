@@ -229,7 +229,7 @@ class DataBaseConnection extends PDO {
 	 *
 	 * @param int   dataRowID the data row to update
 	 * @param int   dataSetID the data set the data row belongs to.
-	 * @param array dataPoint the new data point as in following format. Note that both values are required to be floats.
+	 * @param array datapoint the new data point as in following format. Note that both values are required to be floats.
 	 * 		[
 	 *			"value": [1.0],
 	 * 			"relativeTime": 1.0
@@ -238,9 +238,9 @@ class DataBaseConnection extends PDO {
 	 */
 	public function send_data_point($params) {
 		header("Content-Type: application/json");
-		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "dataPoint" => "array"], 234, $params);
-		if(isset($params["dataPoint"]) and is_array($params["dataPoint"])) {
-			$error = array_merge($error, $this->check_params(["value" => "array", "relativeTime" => "double"], 234, $params["dataPoint"]));
+		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "datapoint" => "array"], 234, $params);
+		if(isset($params["datapoint"]) and is_array($params["datapoint"])) {
+			$error = array_merge($error, $this->check_params(["value" => "array", "relativeTime" => "double"], 234, $params["datapoint"]));
 		}
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
