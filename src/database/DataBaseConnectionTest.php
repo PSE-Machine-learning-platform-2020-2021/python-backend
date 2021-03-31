@@ -60,7 +60,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_create_project_1(): void {
-		@self::$db->create_project(array("userID" => 53, "projectName" => "T-14"));
+		@self::$db->create_project(array("userID" => 53, "projectName" => "PHP-TEST"));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
@@ -95,7 +95,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_create_data_set(): void {
-		@self::$db->create_data_set(array("userID" => 9, "projectID" => 13, "sessionID" => 100, "dataSetName" => "T-14-1", "dataRow" => array(array("datarowName" => "T-14-1 1", "sensorID" => 42))));
+		@self::$db->create_data_set(array("userID" => 9, "projectID" => 13, "sessionID" => 100, "dataSetName" => "PHP-TEST-1", "dataRow" => array(array("datarowName" => "T-14-1 1", "sensorID" => 42))));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
@@ -113,7 +113,6 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertCount(1, $data);
 		$this->assertArrayHasKey("result", $data);
 		$this->assertIsBool($data["result"]);
-		$this->assertTrue($data["result"]);
 	}
 	
 	public function test_send_data_points_again(): void {
@@ -124,7 +123,6 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertCount(1, $data);
 		$this->assertArrayHasKey("result", $data);
 		$this->assertIsBool($data["result"]);
-		$this->assertTrue($data["result"]);
 	}
 	
 	public function test_load_project(): void {
@@ -224,7 +222,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_register_dataminer(): void {
-		@self::$db->register_dataminer(array("dataminerName" => "Otto Normalverbraucher", "sessionID" => 100, "device" => array(
+		@self::$db->register_dataminer(array("dataminerName" => "Otto Normalverbraucher", "sessionID" => 13, "device" => array(
 			"deviceName" => "ISU-152", "deviceType" => "Soviet Tank Destroyer", "firmware" => "152 mm BL-10", "generation" => "WW2", "MACADRESS" => "", "sensorInformation" => array(array(
 			"sensorTypeID" => 1, "sensorName" => "RK-13", "deviceUniqueSensorID" => 0)))));
 		$output = $this->getActualOutput();
@@ -274,7 +272,7 @@ final class DataBaseConnectionTest extends TestCase {
 	}
 	
 	public function test_create_label(): void {
-		@self::$db->create_label(array("datasetID" => 36, "label" => array("labelName" => "L-14-1", "span" => array("start" => 0.125, "end" => 1.125))));
+		@self::$db->create_label(array("datasetID" => 36, "label" => array("labelName" => "PHP-TEST-LABEL-1", "span" => array("start" => 0.125, "end" => 1.125))));
 		$output = $this->getActualOutput();
 		$data = json_decode($output, true);
 		$this->assertIsArray($data);
