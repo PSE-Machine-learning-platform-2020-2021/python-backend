@@ -253,7 +253,7 @@ class DataBaseConnection extends PDO {
 		# Add new data point
 		$data = json_decode($this->last_statement->fetch()["dataJSON"], true);
 		$data[] = $params["datapoint"];
-		update_data_row($params["dataSetID"], $params["dataRowID"], $data);
+		$this->update_data_row($params["dataSetID"], $params["dataRowID"], $data);
 	}
 	
 	/**
@@ -271,7 +271,7 @@ class DataBaseConnection extends PDO {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
 		}
-		update_data_row($params["dataSetID"], $params["dataRowID"], $params["datapoints"]);
+		$this->update_data_row($params["dataSetID"], $params["dataRowID"], $params["datapoints"]);
 	}
 	
 	/**
