@@ -234,14 +234,14 @@ class DataBaseConnection extends PDO {
 	 *			"value": [1.0],
 	 * 			"relativeTime": 1.0
 	 *		]
-	 * @return void  Prints a json formatted object with an only member result indicating successful datapoint insertion. Prints instead json formatted error messages if the params do not match in any way.
+	 * @return void            Please see the documentation of update_data_row for further details.
 	 */
 	public function send_data_point($params) {
-		header("Content-Type: application/json");
 		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "datapoint" => "array"], 234, $params);
 		if(isset($params["datapoint"]) and is_array($params["datapoint"])) {
 			$error = array_merge($error, $this->check_params(["value" => "array", "relativeTime" => "double"], 234, $params["datapoint"]));
 		}
+		header("Content-Type: application/json");
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 			return;
@@ -249,14 +249,42 @@ class DataBaseConnection extends PDO {
 		# Get data to update
 		$sql = "SELECT dataJSON FROM Datarow WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
 		$this->get_data($sql);
-		
+	
 		# Add new data point
 		$data = json_decode($this->last_statement->fetch()["dataJSON"], true);
 		$data[] = $params["datapoint"];
+		update_data_row($params["dataSetID"], $params["dataRowID"], $data);
+	}
+	
+	/**
+	 * Updates the data row specified in dataRowID by setting the data field to the object passed in the parameter datapoints.
+	 *
+	 * @param int   dataRowID  the data row to update
+	 * @param int   dataSetID  the data set the data row belongs to.
+	 * @param array datapoints An array that is transformed to json and then inserted into the data row. THERE IS NO CONTENT CHECKING FOR THIS PARAMETER!
+	 * @return void            Please see the documentation of update_data_row for further details.
+	 */
+	public function send_data_points_again($params) {
+		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "datapoints" => "array"], 267, $params);
+		header("Content-Type: application/json");
+		if(count($error) > 0) {
+			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+			return;
+		}
+		update_data_row($params["dataSetID"], $params["dataRowID"], $params["datapoints"]);
+	}
+	
+	/**
+	 * This method combines the database updating part of the two quite similar functions send_data_point and send_data_points_again.
+	 *
+	 * @param int   $set  The id number of the data set of the data row to update
+	 * @param int   $row  The id number of the data row to update
+	 * @param array $data The actual data to put into the data row on update.
+	 * @return void  Prints a json formatted object with an only member result indicating successful datapoint insertion. Prints instead json formatted error messages if the params do not match in any way.
+	 */
+	private function update_data_row(int $set, int $row, array $data) {
 		$data = json_encode($data, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
-		
-		#  Update table
-		$sql = "UPDATE Datarow SET dataJSON = '{$data}' WHERE datarowID = {$params["dataRowID"]} AND datasetID = {$params["dataSetID"]}";
+		$sql = "UPDATE Datarow SET dataJSON = '{$data}' WHERE datarowID = {$row} AND datasetID = {$set}";
 		$this->last_statement = $this->prepare($sql);
 		$this->last_statement->execute();
         echo '{"result": ' . (($this->last_statement->rowCount() == 1) ? 'true' : 'false') . '}';

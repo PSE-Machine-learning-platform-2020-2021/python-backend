@@ -116,6 +116,17 @@ final class DataBaseConnectionTest extends TestCase {
 		$this->assertTrue($data["result"]);
 	}
 	
+	public function test_send_data_points_again(): void {
+		@self::$db->send_data_points_again(array("dataRowID" => 1, "dataSetID" => 0, "sessionID" => 100, "datapoints" => array(array("value" => [1.0], "relativeTime" => 0.625))));
+		$output = $this->getActualOutput();
+		$data = json_decode($output, true);
+		$this->assertIsArray($data);
+		$this->assertCount(1, $data);
+		$this->assertArrayHasKey("result", $data);
+		$this->assertIsBool($data["result"]);
+		$this->assertTrue($data["result"]);
+	}
+	
 	public function test_load_project(): void {
 		@self::$db->load_project(array("userID" => 9, "projectID" => 13));
 		$output = $this->getActualOutput();

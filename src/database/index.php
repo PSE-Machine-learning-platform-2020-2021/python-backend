@@ -35,11 +35,11 @@ switch($_GET["action"]) {
 	case "delete_data_set":
 	case "register_admin":
 	case "register_dataminer":
-#	case "register_ai_model_user":
 	case "login_admin":
 	case "create_label":
 	case "set_label":
 	case "delete_label":
+	case "send_data_points_again":
 		if(count($_POST) === 0) {
 			http_response_code(406);
 			throw new BadMethodCallException("No parameters passed. This is illegal. Intelligence Agency is informed.");
