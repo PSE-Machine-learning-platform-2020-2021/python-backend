@@ -114,8 +114,9 @@ class Database:
         cursor = self.data_base.cursor(dictionary=True)
         query = """SELECT sensorID AS type
                    FROM Datarow 
-                   WHERE datasetID in %s"""
-        cursor.execute(query, tuple(self.data_set_ids))
+                   WHERE datasetID IN """
+        query += str(tuple(self.data_set_ids))
+        cursor.execute(query)
         result: set[int] = set()
         for row in cursor.fetchall():
             result |= row["type"]
