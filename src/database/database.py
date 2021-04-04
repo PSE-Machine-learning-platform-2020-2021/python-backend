@@ -112,10 +112,9 @@ class Database:
         if len(self.sensor_type_ids) > 0:
             return self.sensor_type_ids
         cursor = self.data_base.cursor(dictionary=True)
-        query = """SELECT sensorTypeID AS type
-                   FROM Sensor 
-                   WHERE sensorID 
-                   IN (SELECT sensorID FROM Datarow WHERE datasetID in %s)"""
+        query = """SELECT sensorID AS type
+                   FROM Datarow 
+                   WHERE datasetID in %s"""
         cursor.execute(query, tuple(self.data_set_ids))
         result: set[int] = set()
         for row in cursor.fetchall():
