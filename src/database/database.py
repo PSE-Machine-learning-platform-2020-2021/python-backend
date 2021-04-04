@@ -119,7 +119,7 @@ class Database:
         cursor.execute(query)
         result: set[int] = set()
         for row in cursor.fetchall():
-            result |= row["type"]
+            result.add(row["type"])
         self.sensor_type_ids = sorted(result)
         return self.sensor_type_ids
 
