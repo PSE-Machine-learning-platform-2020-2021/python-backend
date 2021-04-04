@@ -69,7 +69,12 @@ class Database:
 
             # Integrate all the data rows found into the dataset
             for data_row in cursor.fetchall():
-                name: str = data_row["sensorName"] if data_row["name"] is None else data_row["name"]
+                name: str = str(data_row["sensorName"]) if data_row["name"] is None else str(data_row["name"])
+                if name in data_set:
+                    i = 0
+                    while name + "R" + str(i) in data_set:
+                        i += 1
+                    name += "R" + str(i)
                 data_rows_loaded = json.loads(data_row["dataJSON"])
                 for index, value in enumerate(data_rows_loaded[0]["value"]):
                     dr_name = name + " " + str(index)
