@@ -345,7 +345,7 @@ if __name__ == "__main__":
     classifier = choose_classifier(exec_params["classifier"])
     imputators = choose_imputator(exec_params["imputator"])
     # Get Access to our data base
-    database = Database(exec_params["dataSets"])
+    database = Database(exec_params["dataSets"], exec_params["projectID"])
     # Get the data sets we need from the database
     datasets = database.get_data_sets()
     # Prepare the data

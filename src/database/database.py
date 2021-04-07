@@ -23,12 +23,14 @@ class Database:
     This class bundles together all needed database accessing needed for current plan of python part.
     """
 
-    def __init__(self, data_set_ids: list[int]):
+    def __init__(self, data_set_ids: list[int], project_id: int):
         """
         Creates an object of Database class based on configuration file.
         :param data_set_ids: A list containing the database indices of all of the desired data sets for further
                              processing.
+        :param project_id: The running number of the project this process belongs to.
         """
+        self.project_id = project_id
         self._labels: dict[int, str] = {}
         self._labels_reversed: dict[str, int] = {}
         self.data_set_ids = data_set_ids
@@ -160,7 +162,8 @@ class Database:
                         case, the list is internally collected.
         :return: The Id of the classifier ("AI model ID").
         """
-        query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable) VALUES (%s, %s, %s, %s)"""
+        query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable, ProjectID) 
+        VALUES (%s, %s, %s, %s, %s)"""
         cursor = self.data_base.cursor()
         self._get_labels()
         if sensors is None:
@@ -169,7 +172,8 @@ class Database:
                        (pickle.dumps(classifier),
                         pickle.dumps(scaler),
                         json.dumps(sensors),
-                        json.dumps(self._labels)))
+                        json.dumps(self._labels),
+                        self.project_id))
         self.data_base.commit()
         return cursor.lastrowid
 
