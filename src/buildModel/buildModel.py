@@ -3,6 +3,9 @@
 train an AI model. """
 import sys
 from pathlib import Path
+
+from sklearn.exceptions import ConvergenceWarning
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 import json
@@ -198,7 +201,6 @@ def impute(data: DataFrame, imputator: Union[SimpleImputer]) -> DataFrame:
     """
     data = data.replace([np.inf, -np.inf], np.NaN)
     if data.isna().values.any():
-        print(data)
         imputator.fit(data)
         return DataFrame(imputator.transform(data), columns=data.columns, index=data.index)
     return data
@@ -234,8 +236,8 @@ def create_time_slices(data: list[DataFrame], imputer: Union[SimpleImputer], sli
         df["label"] = labels
         local_cs = slidingWindowSize
         local_step = slidingWindowStep
-        if local_cs > df.shape[0]:
-            local_cs = df.shape[0]
+        if local_cs > df.shape[0] // 4:
+            local_cs = df.shape[0] // 4
         if local_step > local_cs:
             local_step = local_cs
         for i in range(0, df.shape[0] - local_cs + 1, local_step):
@@ -286,9 +288,7 @@ def partition_data(data: DataFrame, percentage=0.8) -> tuple[DataFrame, Series, 
         raise ValueError("Param percentage must lie in the open interval (0;1]. Passed value was " + str(percentage))
     if data is None:
         raise ValueError("No data passed!")
-    cut = int(data.shape[0] * percentage)
-    if cut >= data.shape[0] - 1:
-        cut = -1
+    cut = int((data.shape[0] - 1) * percentage)
     train_x = data.iloc[:cut, :-1]
     train_y = data.iloc[:cut, -1]
     test_x = data.iloc[cut:, :-1]
@@ -364,7 +364,11 @@ if __name__ == "__main__":
     x_training_processed = preprocess_data(x_training, scaler)
     x_testing_processed = preprocess_data(x_testing, scaler, True)
     # as second to last slidingWindowStep, train our classifier!
-    train_classifier(x_training_processed, y_training, classifier)
+    try:
+        train_classifier(x_training_processed, y_training, classifier)
+    except ConvergenceWarning:
+        notify_server(-1)
+        exit(0)
     # as last, put everything in the data base and be done.
     model_id = database.put_stuff(classifier, scaler)
     # as very last, say our server hello, so that it sends an email.

@@ -117,7 +117,7 @@ class Database:
         query = """SELECT sensorID AS type
                    FROM Datarow 
                    WHERE datasetID IN """
-        query += str(tuple(self.data_set_ids))
+        query += self._tuple_ize_dsi()
         cursor.execute(query)
         result: set[int] = set()
         for row in cursor.fetchall():
@@ -188,7 +188,7 @@ class Database:
         if len(self._labels) > 0:
             return
         query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN """
-        query += str(tuple(self.data_set_ids)) if len(self.data_set_ids) > 1 else "(" + str(self.data_set_ids[0]) + ")"
+        query += self._tuple_ize_dsi()
         cursor = self.data_base.cursor(dictionary=True)
         cursor.execute(query)
         label_names: set[str] = set()
@@ -212,3 +212,6 @@ class Database:
                     ds["label"] = new_label
                 else:
                     continue
+
+    def _tuple_ize_dsi(self) -> str:
+        return str(tuple(self.data_set_ids)) if len(self.data_set_ids) > 1 else "(" + str(self.data_set_ids[0]) + ")"
