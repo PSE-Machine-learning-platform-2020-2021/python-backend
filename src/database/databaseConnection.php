@@ -726,7 +726,7 @@ class DataBaseConnection extends PDO {
 			$error = array_merge($error, $this->check_params(["labelName" => "string", "span" => "array"], 722, $params["label"]));
 			if(isset($params["label"]["span"]) and is_array($params["label"]["span"])) {
 				$start = $this->check_params(["start" => "double", "start" => "int"], 722, $params["label"]["span"]);
-				$end = $this->check_params(["end" => "double", "end" => "int"], 722, $params["label"]["span"])
+				$end = $this->check_params(["end" => "double", "end" => "int"], 722, $params["label"]["span"]);
 				if(count($start) >= 2) {
 					$error[] = $start[0];
 				}
