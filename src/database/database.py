@@ -184,7 +184,7 @@ class Database:
         if len(self._labels) > 0:
             return
         query = """SELECT datasetID, name, start, end FROM Label WHERE datasetID IN """
-        query += str(tuple(self.data_set_ids))
+        query += str(tuple(self.data_set_ids)) if len(self.data_set_ids) > 1 else "(" + str(self.data_set_ids[0]) + ")"
         cursor = self.data_base.cursor(dictionary=True)
         cursor.execute(query)
         label_names: set[str] = set()

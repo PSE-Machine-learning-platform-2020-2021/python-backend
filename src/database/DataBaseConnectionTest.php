@@ -144,7 +144,7 @@ final class DataBaseConnectionTest extends TestCase {
 		$data = $data["dataSet"];
 		foreach($data as $set) {
 			$this->assertTrue(isset($set["dataRowSensors"], $set["dataSetId"], $set["dataSetName"], $set["generateDate"], $set["dataRows"], $set["label"]));
-			$this->assertIsInt($set["dataSetId"]);
+			$this->assertIsInt($set["dataSetID"]);
 			$this->assertIsString($set["dataSetName"]);
 			$this->assertIsInt($set["generateDate"]);
 			$this->assertIsArray($set["dataRowSensors"]);
