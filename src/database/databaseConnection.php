@@ -315,7 +315,7 @@ class DataBaseConnection extends PDO {
 	 *							"deviceID": 1
 	 *						}
 	 *					],
-	 *					"dataSetId": 1,
+	 *					"dataSetID": 1,
 	 *					"dataSetName": "xxx",
 	 *					"generateDate": 1,	// as UNIX Timestamp
 	 *					"dataRows": [
@@ -392,7 +392,7 @@ class DataBaseConnection extends PDO {
 			
 			# Put everything together.
 			$result["projectData"]["dataSet"][] = array("dataRowSensors" => $data_row_sensors, 
-														"dataSetId" => $data_set["dataSetID"], 
+														"dataSetID" => $data_set["dataSetID"], 
 														"dataSetName" => $data_set["dataSetName"], 
 														"generateDate" => strtotime($data_set["generateDate"]),
 														"dataRows" => $data_rows, 
