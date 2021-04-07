@@ -353,12 +353,12 @@ class DataBaseConnection extends PDO {
 		$result = $this->last_statement->fetch();
 		
 		#Load the ai models associated with the loaded project.
-		$sql = "SELECT aiModelID AS id FROM AIModel WHERE projectID = {$params["projectID"]} AND projectAdminID = {$params["userID"]}";
+		$sql = "SELECT ID FROM Classifiers WHERE ProjectID = {$params["projectID"]}";
 		$this->get_data($sql);
 		$result["projectData"] = [];
 		$result["projectData"]["aiModelID"] = [];
 		foreach($this->last_statement->fetchAll() as $ai_model) {
-			$result["projectData"]["aiModelID"][] = $ai_model["id"];
+			$result["projectData"]["aiModelID"][] = $ai_model["ID"];
 		}
 		
 		# Load the datasets associated with the loaded project.
