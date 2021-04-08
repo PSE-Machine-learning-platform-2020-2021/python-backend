@@ -69,4 +69,4 @@ if __name__ == "__main__":
         if x == -1:
             print("UNKNOWN PATTERN")
             continue
-        print(labels[x])
+        print(labels[str(x)])
