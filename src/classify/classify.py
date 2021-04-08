@@ -20,13 +20,7 @@ def fetch_parameters():
     The json file needs to contain the following data in exact the described format in order to be usable:
 
     {
-        'dataSets': [
-            1,
-
-            <...>,
-
-            42
-        ],
+        'dataSet': 1,
 
         'classifier': <Classifier_id>
     }
@@ -50,7 +44,7 @@ def fetch_parameters():
         data: dict = json.load(file)
         file.close()
     os.remove(file_path)
-    if "dataSets" not in data:
+    if "dataSet" not in data:
         raise IndexError()
     if "classifier" not in data:
         raise IndexError()
@@ -60,7 +54,7 @@ def fetch_parameters():
 if __name__ == "__main__":
     # first of all - get our execution parameters!
     exec_params = fetch_parameters()
-    database = Database(exec_params["dataSets"])
+    database = Database([exec_params["dataSet"]])
     data_sets = database.get_data_sets()
     classifier, scaler, sensors, labels = database.get_stuff(exec_params["classifier"])
     scaled_data = scaler.transform(data_sets)

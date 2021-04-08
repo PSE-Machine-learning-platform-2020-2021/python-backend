@@ -7,7 +7,7 @@ session_start();
 $result = json_decode(file_get_contents("php://input"), true);
 
 # Ensure that we have all data required:
-if(!is_array($result) OR !isset($result["dataSet"], $result["classifier"]) OR !is_array($result["dataSet"]) OR $_SERVER["REQUEST_METHOD"] !== "POST") {
+if(!is_array($result) OR !isset($result["dataSet"], $result["classifier"]) OR $_SERVER["REQUEST_METHOD"] !== "POST") {
 	http_response_code(406); # Code 406 stands for "Not Acceptable" which is exactly what our input is in one of these cases
 	die();
 }
@@ -20,7 +20,7 @@ if($lock) {
 }
 fclose($file);
 $output = [];
-exec("python 3.9 classify.py " . $fn . " 2>&1", $output);
+exec("python3.9 classify.py " . $fn . " 2>&1", $output);
 header("Content-Type: application/json");
 echo json_encode($output, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT);
 ?>
