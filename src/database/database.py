@@ -125,7 +125,7 @@ class Database:
         self.sensor_type_ids = sorted(result)
         return self.sensor_type_ids
 
-    def get_stuff(self, classifier_id: int) -> tuple[Any, Any, list[int], dict[int, str]]:
+    def get_stuff(self, classifier_id: int) -> tuple[Any, Any, list[int], dict[int, str], list[str]]:
         """
         This method retrieves a classifier and the scaler associated with it from their respecting database tables.
         If the underlying database connector mechanics raise Errors or Exceptions while doing this, they are not
@@ -146,14 +146,16 @@ class Database:
         scaler = pickle.loads(result[0]["Scaler"])
         self.sensor_type_ids, self._labels = json.loads(result[0]["Sensors"]), json.loads(result[0]["LabelsTable"])
         self._labels_reversed = {v: k for k, v in self._labels.items()}
-        return classifier, scaler, self.sensor_type_ids, self._labels
+        features = json.loads(result[0]["Features"])
+        return classifier, scaler, self.sensor_type_ids, self._labels, features
 
-    def put_stuff(self, classifier, scaler, sensors: list[int] = None) -> int:
+    def put_stuff(self, classifier, scaler, sensors: list[int] = None, *, features: list[str]) -> int:
         """
         This method puts a classifier, a scaler, the label-to-number association table and the list of sensor types
         that were used when collecting the data for the data sets used in the training of the ai model into the
         corresponding data base table.
 
+        :param features: The features that were extracted from the model training data.
         :param classifier: A classifier from sklearn. It is then pickled and stored.
         :param scaler: The scaler that was used to transform the training data for the classifier passed right before.
         :param sensors: The ids of the types of the sensors used for collecting the data that was used to train the
@@ -162,8 +164,8 @@ class Database:
                         case, the list is internally collected.
         :return: The Id of the classifier ("AI model ID").
         """
-        query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable, ProjectID) 
-        VALUES (%s, %s, %s, %s, %s)"""
+        query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable, ProjectID, Features) 
+        VALUES (%s, %s, %s, %s, %s, &s)"""
         cursor = self.data_base.cursor()
         self._get_labels()
         if sensors is None:
@@ -173,7 +175,8 @@ class Database:
                         pickle.dumps(scaler),
                         json.dumps(sensors),
                         json.dumps(self._labels),
-                        self.project_id))
+                        self.project_id,
+                        json.dumps(features)))
         self.data_base.commit()
         return cursor.lastrowid
 
