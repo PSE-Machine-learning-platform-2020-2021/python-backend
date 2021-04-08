@@ -371,6 +371,6 @@ if __name__ == "__main__":
         notify_server(-1)
         exit(0)
     # as last, put everything in the data base and be done.
-    model_id = database.put_stuff(classifier, scaler, features)
+    model_id = database.put_stuff(classifier, scaler, features=features)
     # as very last, say our server hello, so that it sends an email.
     notify_server(model_id)
