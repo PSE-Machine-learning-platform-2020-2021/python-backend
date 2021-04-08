@@ -827,7 +827,7 @@ class DataBaseConnection extends PDO {
 	 * @param int $uid - the numeric user id of of whom the email address is to be retrieved.
 	 * @return array   - the corresponding email address together with the name, each located under 'email', resp. 'name'
 	 */
-	public function get_email($uid) {
+	public function get_email(int $uid): array {
 		$sql = "SELECT name, eMail AS email FROM User, Admin WHERE Admin.userID = {$uid} AND User.UserID = {$uid}";
 		$this->get_data($sql);
 		$result = $this->last_statement->fetchAll();
@@ -835,6 +835,21 @@ class DataBaseConnection extends PDO {
 			throw new UnexpectedValueException("Illegal number of records - database is corrupted!");
 		}
 		return $result[0];
+	}
+	
+	/**
+	 * This method returns the sensor types necessairy to use the model encoded by its running number.
+	 * @param int $model_id - the numeric id of the classifier in its data base.
+	 * @return array        - the numeric sensor types necessairy for this model.
+	 */
+	public function get_sensor_types(int $model_id): array {
+		$sql = "SELECT Sensors FROM Classifiers WHERE ID = {$model_id}";
+		$this->get_data($sql);
+		$result = $this->last_statement->fetchAll();
+		if($this->last_statement->rowCount() !== 1) {
+			throw new UnexpectedValueException("Illegal number of records - database is corrupted!");
+		}
+		return $result[0]["Sensors"];
 	}
 }
 ?>

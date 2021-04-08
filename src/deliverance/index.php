@@ -19,6 +19,7 @@ if(!is_array($result)
 require("../database/databaseConnection.php");
 $db = new DatabaseConnection();
 $address = $db->get_email($_SESSION["logged_in"]);
+$sensor_types = implode(",", $db->get_sensor_types($result["id"]));
 
 /**
  * Sends emails to recipients, informing them about a new model ready to their use.
@@ -45,7 +46,7 @@ function send(): array {
 	$mailer->FromName = "KI-App";
 	$mailer->isHTML();
 	$mailer->Subject = "Ein KI-Modell wurde Ihnen zur Nutzung freigegeben."; # Needs Inlcusion of the corresponding Texts!
-	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$result["id"]}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
+	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$result["id"]}&sensorTypes={$sensor_types}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
 	foreach ($addressList as $address) {
 		if (!isset($address["name"]) {
 			$address["name"] = $address["email"];
@@ -68,7 +69,7 @@ function get() {
 		case "EXE":
 			# Not implemented.
 		case "WEB_APP":
-			return ["url" => "https://129.13.170.59/build?useModel=true&modelID={$result["id"]}"];
+			return ["url" => "https://129.13.170.59/build?useModel=true&modelID={$result["id"]}&sensorTypes={$sensor_types}"];
 		default:
 			return [];
 	}
