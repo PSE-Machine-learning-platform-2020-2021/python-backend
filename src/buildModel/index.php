@@ -56,10 +56,15 @@ $mailer->isHTML();
 if ($code === 0) {
 	$mailer->Subject = "Ihr KI-Modell ist fertig"; # Needs Inlcusion of the corresponding Texts!
 	$mailer->Body = "<p>Bitte folgen Sie diesem Link, um ihr KI-Modell auszuliefern: <a href=\"https://129.13.170.59/build?deliverModel=true&modelID={$output}\">Auslieferungsseite</a>.</p><p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+	if ($output < 1) {
+		# Now the model could not be created due to insufficient data input
+		$mailer->Subject = "Berechnung des KI-Modells gescheitert"; # Needs Inlcusion of the corresponding Texts!
+		$mailer->Body = "<p>" . "Hallo " . $address["name"] . ".</p><p>" . "Ihr KI-Modell konnte auf Grund unzureichender Datenlage nicht berechnet werden. <br />Bitte stellen Sie dem Algorithmus mehr Datenpunkte zur Verfügung." . "</p><p>" . "Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit" . "</p>";
+	}
 }
 else {
 	$mailer->Subject = "Fehler in Modell-Erstellung";
-	$mailer->Body = "<p>Bei der Erstellung Ihres KI-Modells ist ein Fehler aufgetreten. Der Bau der Anwendung konnte nicht erfolgreich abgeschlossen werden.<br />Bitte wenden Sie sich an Ihren Administrator und übermitteln Sie ihm folgende Daten:<pre>" . implode("\r\n", $_) . "</pre></p></p>Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit</p>";
+	$mailer->Body = "<p>" . "Bei der Erstellung Ihres KI-Modells ist ein Fehler aufgetreten. Der Bau der Anwendung konnte nicht erfolgreich abgeschlossen werden.<br />Bitte wenden Sie sich an Ihren Administrator und übermitteln Sie ihm folgende Daten:" . "<pre>" . implode("\r\n", $_) . "</pre></p></p>" . "Mit freundlichen Grüßen, <br />die KI-Modell-Trainingseinheit" . "</p>";
 }
 $mailer->Send();
 ?>
