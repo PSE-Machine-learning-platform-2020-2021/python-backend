@@ -260,7 +260,7 @@ def extract_features(ft_list: list[str], data: list[DataFrame], label: list[int]
                     have been corrupted in feature extraction.
     :return:        A list containing all the data with extracted features on them.
     """
-    if len(data) != len(label):
+    if len(data) != len(label) and len(label) > 0:
         raise ValueError("Input data does not contain same amount of entries as labels.")
     settings = {key: ComprehensiveFCParameters()[key] for key in ft_list}
     results: list[DataFrame] = []
@@ -270,7 +270,8 @@ def extract_features(ft_list: list[str], data: list[DataFrame], label: list[int]
         results.append(tsfresh.extract_features(block, column_id="id", default_fc_parameters=settings,
                                                 disable_progressbar=True))
     output: DataFrame = impute(pandas.concat(results), imputer)
-    output["label"] = label
+    if len(label) > 0:
+        output["label"] = label
     return output
 
 
