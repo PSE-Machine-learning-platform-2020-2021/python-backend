@@ -4,6 +4,10 @@ This file is sort of a function for the TypeScript front end and handles request
 """
 import sys
 from pathlib import Path
+
+import pandas
+from pandas import DataFrame
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 import json
@@ -55,7 +59,14 @@ if __name__ == "__main__":
     # first of all - get our execution parameters!
     exec_params = fetch_parameters()
     database = Database([exec_params["dataSet"]], 0)
-    data_sets = database.get_data_sets()
+    data_sets: list[DataFrame] = database.get_data_sets()
+    amount = len(data_sets)
+    if amount <= 0:
+        exit(1)
+    elif amount == 1:
+        data_sets: DataFrame = data_sets[0]
+    else:
+        data_sets: DataFrame = pandas.concat(data_sets)
     classifier, scaler, sensors, labels = database.get_stuff(exec_params["classifier"])
     scaled_data = scaler.transform(data_sets)
     prediction = classifier.predict(scaled_data)
