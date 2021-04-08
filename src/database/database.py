@@ -94,10 +94,10 @@ class Database:
                 ds = pd.DataFrame(data_set)
                 ds.id = i
                 self.data_sets.append(ds)
-
-        for x in self.data_sets:
-            x["label"] = -1
-            self._get_labels()
+        if self.project_id > 0:
+            for x in self.data_sets:
+                x["label"] = -1
+                self._get_labels()
         return self.data_sets
 
     def get_sensor_type_ids(self) -> list[int]:
@@ -145,7 +145,7 @@ class Database:
         classifier = pickle.loads(result[0]["Classifier"])
         scaler = pickle.loads(result[0]["Scaler"])
         self.sensor_type_ids, self._labels = json.loads(result[0]["Sensors"]), json.loads(result[0]["LabelsTable"])
-        self._labels_reversed = {v: k for k, v in self._labels}
+        self._labels_reversed = {v: k for k, v in self._labels.items()}
         return classifier, scaler, self.sensor_type_ids, self._labels
 
     def put_stuff(self, classifier, scaler, sensors: list[int] = None) -> int:

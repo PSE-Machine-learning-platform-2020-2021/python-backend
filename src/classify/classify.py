@@ -54,7 +54,7 @@ def fetch_parameters():
 if __name__ == "__main__":
     # first of all - get our execution parameters!
     exec_params = fetch_parameters()
-    database = Database([exec_params["dataSet"]])
+    database = Database([exec_params["dataSet"]], 0)
     data_sets = database.get_data_sets()
     classifier, scaler, sensors, labels = database.get_stuff(exec_params["classifier"])
     scaled_data = scaler.transform(data_sets)
