@@ -165,7 +165,7 @@ class Database:
         :return: The Id of the classifier ("AI model ID").
         """
         query = """INSERT INTO Classifiers (Classifier, Scaler, Sensors, LabelsTable, ProjectID, Features) 
-        VALUES (%s, %s, %s, %s, %s, &s)"""
+        VALUES (%s, %s, %s, %s, %s, %s)"""
         cursor = self.data_base.cursor()
         self._get_labels()
         if sensors is None:
