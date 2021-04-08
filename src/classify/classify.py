@@ -67,6 +67,6 @@ if __name__ == "__main__":
     prediction = classifier.predict(scaled_data)
     for x in prediction:
         if x == -1:
-            print("&lt;No label provided&gt;")
+            print("<No label provided>")
             continue
         print(labels[x])
