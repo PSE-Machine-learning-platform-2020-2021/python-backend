@@ -849,7 +849,7 @@ class DataBaseConnection extends PDO {
 		if($this->last_statement->rowCount() !== 1) {
 			throw new UnexpectedValueException("Illegal number of records - database is corrupted!");
 		}
-		return json_decode([$result[0]["Sensors"]], true);
+		return json_decode($result[0]["Sensors"], true);
 	}
 }
 ?>
