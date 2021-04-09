@@ -48,11 +48,11 @@ function send(): array {
 	$mailer->isHTML();
 	$mailer->Subject = "Ein KI-Modell wurde Ihnen zur Nutzung freigegeben."; # Needs Inlcusion of the corresponding Texts!
 	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$_POST["result"]["id"]}&sensorTypes={$_POST["sensor_types"]}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
-	foreach ($addressList as $_POST["address"]) {
-		if (!isset($_POST["address"]["name"])) {
-			$_POST["address"]["name"] = $_POST["address"]["email"];
+	foreach ($addressList as $element) {
+		if (!isset($element["name"])) {
+			$element["name"] = $element["email"];
 		}
-		$mailer->AddAddress($_POST["address"]["email"], $_POST["address"]["name"]);
+		$mailer->AddAddress($element["email"], $element["name"]);
 		$mailer->Send();
 		$mailer->ClearAllRecipients();
 	}
