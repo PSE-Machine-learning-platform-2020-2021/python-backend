@@ -842,7 +842,7 @@ class DataBaseConnection extends PDO {
 	 * @param int $model_id - the numeric id of the classifier in its data base.
 	 * @return array        - the numeric sensor types necessairy for this model.
 	 */
-	public function get_sensor_types(int $model_id): array {
+	public function get_sensor_types(int $model_id): string {
 		$sql = "SELECT Sensors FROM Classifiers WHERE ID = {$model_id}";
 		$this->get_data($sql);
 		$result = $this->last_statement->fetchAll();
