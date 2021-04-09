@@ -24,7 +24,7 @@ $sensor_types = implode(",", $db->get_sensor_types($result["id"]));
 /**
  * Sends emails to recipients, informing them about a new model ready to their use.
  */
-function send(): array {
+function send(array $result): array {
 	$addressList = [];
 	if (array_key_exists("recipients", $result) AND is_array($result["recipients"])) {
 		$addressList = $result["recipients"];
@@ -61,7 +61,7 @@ function send(): array {
 /**
  * Returns the link to the AI model in WEB mode and the same in EXE mode.
  */
-function get() {
+function get(array $result) : array {
 	if (!array_key_exists("format", $result)) {
 		return [];
 	}
@@ -79,7 +79,7 @@ $output = [];
 switch($result["job"]) {
 	case "get":
 	case "send":
-		echo json_encode(eval("{$result["job"]}();"), JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+		echo json_encode(eval("{$result["job"]}($result);"), JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		break;
 	default:
 		http_response_code(501);
