@@ -842,14 +842,14 @@ class DataBaseConnection extends PDO {
 	 * @param int $model_id - the numeric id of the classifier in its data base.
 	 * @return array        - the numeric sensor types necessairy for this model.
 	 */
-	public function get_sensor_types(int $model_id): string {
+	public function get_sensor_types(int $model_id): array {
 		$sql = "SELECT Sensors FROM Classifiers WHERE ID = {$model_id}";
 		$this->get_data($sql);
 		$result = $this->last_statement->fetchAll();
 		if($this->last_statement->rowCount() !== 1) {
 			throw new UnexpectedValueException("Illegal number of records - database is corrupted!");
 		}
-		return $result[0]["Sensors"];
+		return json_decode([$result[0]["Sensors"]], true);
 	}
 }
 ?>
