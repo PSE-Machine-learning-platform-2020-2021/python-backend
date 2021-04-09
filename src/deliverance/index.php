@@ -4,16 +4,16 @@ ini_set("display_errors", 1);
 ob_start();
 session_start();
 
+$result = json_decode(file_get_contents("php://input"), true);
+
 # Ensure that we have all data required:
-if $_SERVER["REQUEST_METHOD"] !== "POST" 
+if ($_SERVER["REQUEST_METHOD"] !== "POST" 
+   OR !is_array($result)
    OR !isset($result["job"], $result["id"])
-   OR (!is_array($result) 
    ) {
 	http_response_code(406); # Code 406 stands for "Not Acceptable" which is exactly what our input is in one of these cases
 	die("{}");
 }
-
-$result = json_decode(file_get_contents("php://input"), true);
 
 # Get E-mail address
 require("../database/databaseConnection.php");
