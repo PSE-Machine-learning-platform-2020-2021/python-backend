@@ -48,7 +48,7 @@ function send(): array {
 	$mailer->Subject = "Ein KI-Modell wurde Ihnen zur Nutzung freigegeben."; # Needs Inlcusion of the corresponding Texts!
 	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$result["id"]}&sensorTypes={$sensor_types}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
 	foreach ($addressList as $address) {
-		if (!isset($address["name"]) {
+		if (!isset($address["name"])) {
 			$address["name"] = $address["email"];
 		}
 		$mailer->AddAddress($address["email"], $address["name"]);
