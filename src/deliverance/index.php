@@ -23,6 +23,7 @@ $_POST["sensor_types"] = implode(",", $db->get_sensor_types($_POST["result"]["id
 
 /**
  * Sends emails to recipients, informing them about a new model ready to their use.
+ * @return true if all emails have been successfully sent
  */
 function send(): array {
 	$_POST["result"]["recipients"] = json_decode($_POST["result"]["recipients"], true);
@@ -61,6 +62,7 @@ function send(): array {
 
 /**
  * Returns the link to the AI model in WEB mode and the same in EXE mode.
+ * @return link to the AI model
  */
 function get() : array {
 	if (!array_key_exists("format", $_POST["result"])) {
