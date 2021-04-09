@@ -4,12 +4,12 @@ ini_set("display_errors", 1);
 ob_start();
 session_start();
 
-$result = json_decode(file_get_contents("php://input"), true);
+$_POST["result"] = json_decode(file_get_contents("php://input"), true);
 
 # Ensure that we have all data required:
 if ($_SERVER["REQUEST_METHOD"] !== "POST" 
-   OR !is_array($result)
-   OR !isset($result["job"], $result["id"])
+   OR !is_array($_POST["result"])
+   OR !isset($_POST["result"]["job"], $_POST["result"]["id"])
    ) {
 	http_response_code(406); # Code 406 stands for "Not Acceptable" which is exactly what our input is in one of these cases
 	die("{}");
@@ -18,18 +18,18 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST"
 # Get E-mail address
 require("../database/databaseConnection.php");
 $db = new DatabaseConnection();
-$address = $db->get_email($_SESSION["logged_in"]);
-$sensor_types = implode(",", $db->get_sensor_types($result["id"]));
+$_POST["address"] = $db->get_email($_SESSION["logged_in"]);
+$_POST["sensor_types"] = implode(",", $db->get_sensor_types($_POST["result"]["id"]));
 
 /**
  * Sends emails to recipients, informing them about a new model ready to their use.
  */
 function send(): array {
-	$result["recipients"] = json_decode($result["recipients"], true);
+	$_POST["result"]["recipients"] = json_decode($_POST["result"]["recipients"], true);
 	$addressList = [];
-	if (array_key_exists("recipients", $result) AND is_array($result["recipients"])) {
-		$addressList = $result["recipients"];
-		$addressList[] = $address;
+	if (array_key_exists("recipients", $_POST["result"]) AND is_array($_POST["result"]["recipients"])) {
+		$addressList= $_POST["result"]["recipients"];
+		$addressList[] = $_POST["address"];
 	}
 	else {
 		return ["result" => false];
@@ -47,12 +47,12 @@ function send(): array {
 	$mailer->FromName = "KI-App";
 	$mailer->isHTML();
 	$mailer->Subject = "Ein KI-Modell wurde Ihnen zur Nutzung freigegeben."; # Needs Inlcusion of the corresponding Texts!
-	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$result["id"]}&sensorTypes={$sensor_types}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
-	foreach ($addressList as $address) {
-		if (!isset($address["name"])) {
-			$address["name"] = $address["email"];
+	$mailer->Body = "<p>" . "Bitte folgen Sie diesem Link, um das KI-Modell anzuwenden:" . " <a href=\"https://129.13.170.59/build?useModel=true&modelID={$_POST["result"]["id"]}&sensorTypes={$_POST["sensor_types"]}\">" . "Startseite" . "</a>.</p><p>" . "Mit freundlichen Grüßen, <br />Ihre KI-App." . "</p>";
+	foreach ($addressList as $_POST["address"]) {
+		if (!isset($_POST["address"]["name"])) {
+			$_POST["address"]["name"] = $_POST["address"]["email"];
 		}
-		$mailer->AddAddress($address["email"], $address["name"]);
+		$mailer->AddAddress($_POST["address"]["email"], $_POST["address"]["name"]);
 		$mailer->Send();
 		$mailer->ClearAllRecipients();
 	}
@@ -63,21 +63,21 @@ function send(): array {
  * Returns the link to the AI model in WEB mode and the same in EXE mode.
  */
 function get() : array {
-	if (!array_key_exists("format", $result)) {
+	if (!array_key_exists("format", $_POST["result"])) {
 		return [];
 	}
-	switch($result["format"]) {
+	switch($_POST["result"]["format"]) {
 		case "EXE":
 			# Not implemented.
 		case "WEB_APP":
-			return ["url" => "https://129.13.170.59/build?useModel=true&modelID={$result["id"]}&sensorTypes={$sensor_types}"];
+			return ["url" => "https://129.13.170.59/build?useModel=true&modelID={$_POST["result"]["id"]}&sensorTypes={$_POST["sensor_types"]}"];
 		default:
 			return [];
 	}
 }
 
 $output = [];
-switch($result["job"]) {
+switch($_POST["result"]["job"]) {
 	case "get":
 		echo json_encode(get(), JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
 		break;
