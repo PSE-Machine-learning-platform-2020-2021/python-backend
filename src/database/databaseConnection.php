@@ -370,12 +370,12 @@ class DataBaseConnection extends PDO {
 		$this->get_data($sql);
 		foreach($this->last_statement->fetchAll() as $data_set) {
 			# Load data rows associated with each loaded data set.
-			$sql = "SELECT datarowID AS id, dataJSON AS json FROM Datarow WHERE datasetID = {$data_set["dataSetID"]}";
+			$sql = "SELECT sensorID, datarowID AS id, dataJSON AS json FROM Datarow WHERE datasetID = {$data_set["dataSetID"]}";
 			$stmt1 = $this->prepare($sql);
 			$stmt1->execute();
 			$data_rows = [];
 			foreach($stmt1->fetchAll() as $dr) {
-				$data_rows[] = array("dataRowID" => $dr["id"], "recordingStart" => -1, "dataRow" => json_decode($dr["json"]));
+				$data_rows[] = array("sensorType" => $dr["sensorID"], "dataRowID" => $dr["id"], "recordingStart" => -1, "dataRow" => json_decode($dr["json"]));
 			}
 			
 			# Load all the sensors from the data rows.
@@ -395,7 +395,7 @@ class DataBaseConnection extends PDO {
 														"dataSetID" => $data_set["dataSetID"], 
 														"dataSetName" => $data_set["dataSetName"], 
 														"generateDate" => strtotime($data_set["generateDate"]),
-														"dataRows" => $data_rows, 
+														"dataRows" => $data_rows,
 														"label" => $labels
 														);
 		}
