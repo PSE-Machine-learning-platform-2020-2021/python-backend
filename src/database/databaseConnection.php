@@ -433,7 +433,7 @@ class DataBaseConnection extends PDO {
 		foreach($this->last_statement->fetchAll() as $v) {
 			$r = [];
 			$r = array_merge($r, $v);
-			$sql = "SELECT ID FROM Classifiers WHERE projectID = {$v["projectID"]}";
+			$sql = "SELECT ID FROM Classifiers WHERE ProjectID = {$v["projectID"]}";
 			$this->get_data($sql);
 			$ai_model_ids = [];
 			foreach($this->last_statement->fetchAll(PDO::FETCH_NUM) as $id) {
