@@ -238,9 +238,6 @@ class DataBaseConnection extends PDO {
 	 */
 	public function send_data_point($params) {
 		$error = $this->check_params(["dataRowID" => "integer", "dataSetID" => "integer", "datapoint" => "array"], 239, $params);
-		if(isset($params["datapoint"]) and is_array($params["datapoint"])) {
-			$error = array_merge($error, $this->check_params(["value" => "array", "relativeTime" => "double"], 239, $params["datapoint"]));
-		}
 		header("Content-Type: application/json");
 		if(count($error) > 0) {
 			echo json_encode(["error" => $error], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -252,7 +249,10 @@ class DataBaseConnection extends PDO {
 	
 		# Add new data point
 		$data = json_decode($this->last_statement->fetch()["dataJSON"], true);
-		$data[] = $params["datapoint"];
+		foreach($params["datapoint"] as $dp) {
+			# dp stands for *D*ata *P*oint
+			$data[] = $dp;
+		}
 		$this->update_data_row($params["dataSetID"], $params["dataRowID"], $data);
 	}
 	
